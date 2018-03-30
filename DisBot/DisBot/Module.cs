@@ -8,16 +8,21 @@ using System.IO;
 
 using Discord.Commands;
 using Discord.WebSocket;
-
+using Discord;
 
 namespace DisBot
 {
-    public class Looting : ModuleBase
+    public class Memes : ModuleBase
     {
         [Command("Meme"), Alias("Gimme")]
         public async Task Loot()
         {
-            await ReplyAsync(Looter.Next);
+            var builder = new EmbedBuilder
+            {
+                Color = new Color(200, 160, 50),
+            };
+            builder.ImageUrl = Looter.Next;
+            await ReplyAsync("", false, builder.Build());
         }
 
         private async Task<bool> CheckUser(string[] roles)
@@ -32,7 +37,7 @@ namespace DisBot
         }
 
         [Command("Add")]
-        public async Task AddLoot(int rarity, string url)
+        public async Task AddLoot(string url, int rarity = 1000)
         {
             if (!await CheckUser(Config.Current.AllowedRoles))
                 return;
@@ -70,6 +75,7 @@ namespace DisBot
             await ReplyAsync($"{Context.User} hat {((c != 1)?c + " Einträge":"einen Eintrag")} gelöscht");
         }
 
+        [Command("Delete")]
         public async Task Delete(string value, int count)
         {
             int c = Looter.Delete(value);
@@ -87,7 +93,7 @@ namespace DisBot
             await ReplyAsync("Alles gelöscht");
         }
 
-        [Command("HtmlMemeDump")]
+        [Command("Dump")]
         public async Task GetMemes()
         {
             string path = $@"{Directory.GetCurrentDirectory()}\Dump_{Guid.NewGuid()}.html";
@@ -111,6 +117,47 @@ namespace DisBot
         {
             Config.Load();
             await ReplyAsync("Config loaded");
+        }
+    }
+
+    public class HelpModule : ModuleBase
+    {
+        private readonly CommandService _service;
+
+        public HelpModule(CommandService service)
+        {
+            _service = service;
+        }
+
+        [Command("Help")]
+        public async Task Help()
+        {
+            var builder = new EmbedBuilder()
+            {
+                Color = new Color(114, 137, 218),
+                Description = "Mögliche Commands:"
+            };
+            foreach (var m in _service.Modules)
+            {
+                string moduleDesc = null;
+                foreach (var c in m.Commands)
+                {
+                    var result = await c.CheckPreconditionsAsync(Context);
+                    if (result.IsSuccess)
+                        moduleDesc += $"!{c.Aliases.First()}[{string.Join(",", c.Parameters.Select(x => $"{x.Type.Name}:{x.Name}"))}]\n";
+                }
+                if (!string.IsNullOrWhiteSpace(moduleDesc))
+                {
+                    builder.AddField(x =>
+                    {
+                        x.Name = m.Name;
+                        x.Value = moduleDesc;
+                        x.IsInline = false;
+                    });
+                }
+            }
+
+            await ReplyAsync("Bidde", false, builder.Build());
         }
     }
 }

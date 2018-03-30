@@ -85,6 +85,6 @@ namespace DisBot
         }
 
         public static string GetHTMLFormattedOverview() =>
-            $"<html>\n\t<body>\n{string.Join("\n",_loot.Select(x => $"\t\t<p><h1 style=\"font - family:verdana;\">{x.Key}</h1></p>\n\t\t<p><img src=\"{x.Value}\" alt=\"{x.Value}\"></p>"))}\n\t</body>\n</html>";
+            $"<html>\n\t<body>\n{string.Join("\n",_loot.Select(x => $"\t\t<p><h1 style=\"font-family:verdana;\">{x.Key}</h1></p>\n\t\t<p><img src=\"{x.Value}\" alt=\"{x.Value}\" style=\"max-height: 300px;\"></p>"))}\n\t</body>\n</html>";
     }
 }
