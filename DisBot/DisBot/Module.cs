@@ -70,6 +70,12 @@ namespace DisBot
             await ReplyAsync($"{Context.User} hat {((c != 1)?c + " Einträge":"einen Eintrag")} gelöscht");
         }
 
+        public async Task Delete(string value, int count)
+        {
+            int c = Looter.Delete(value);
+            await ReplyAsync($"{Context.User} hat {((c != 1) ? c + " Einträge" : "einen Eintrag")} gelöscht");
+        }
+
         [Command("Flush")]
         public async Task Flush()
         {
