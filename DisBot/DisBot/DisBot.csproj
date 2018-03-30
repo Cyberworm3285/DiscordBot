@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Discord.Net" Version="1.0.2" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Loot4Standard">
+      <HintPath>C:\Users\cyber\Source\Repos\Loot4Standard\Loot4Standard\Loot4Standard\bin\Debug\netstandard1.2\Loot4Standard.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>
