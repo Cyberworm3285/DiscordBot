@@ -20,26 +20,65 @@ namespace DisBot
             await ReplyAsync(Looter.Next);
         }
 
+        private async Task<bool> CheckUser(string[] roles)
+        {
+            var su = Context.User as SocketGuildUser;
+            if (!su.Roles.Any(x => roles.Contains(x.Name)))
+            {
+                await Context.Channel.SendFileAsync(Path.Combine(Directory.GetCurrentDirectory(), "YuNo.jpg"), $"`{Context.User}:{Context.Message}`");
+                return false;
+            }
+            return true;
+        }
+
         [Command("Add")]
         public async Task AddLoot(int rarity, string url)
         {
-            var su = Context.User as SocketGuildUser;
-            if (!su.Roles.Any(x => Config.Current.AllowedRoles.Contains(x.Name)))
-            {
-                await Context.Channel.SendFileAsync(Path.Combine(Directory.GetCurrentDirectory(),"YuNo.jpg"),$"`{Context.User}:{Context.Message}`");
+            if (!await CheckUser(Config.Current.AllowedRoles))
                 return;
-            }
+
             Looter.AddURL(url, rarity);
-            Config.Current.Write();
             await ReplyAsync($"{Context.User} hat in {Context.Channel} einen Eintrag hinzugefügt");
             await Context.Channel.DeleteMessagesAsync(new[] { Context.Message.Id });
+        }
+
+        [Command("AddRange")]
+        public async Task AddRange(params string[] input)
+        {
+            if (!await CheckUser(Config.Current.AllowedRoles))
+                return;
+
+            int c = 0;
+            for (int i = 0; i < input.Length; i+=2)
+            {
+                int r = 0;
+                if (int.TryParse(input[i], out r))
+                {
+                    Looter.AddURL(input[i + 1], r);
+                    c++;
+                }
+                else
+                    await ReplyAsync($"Keine Zahl ({input[i]}), Element {i/2+1} wird übersprungen");
+            }
+            await ReplyAsync($"{Context.User} hat ({c}/{input.Length/2}) Element/e erfolgreich hinzugefügt");
         }
 
         [Command("DeLast")]
         public async Task DeleteLast()
         {
             int c = Looter.Delete(Looter.Last);
-            await ReplyAsync($"{Context.User} hat {((c != 1)?c + "Einträge":"einen Eintrag")} gelöscht");
+            await ReplyAsync($"{Context.User} hat {((c != 1)?c + " Einträge":"einen Eintrag")} gelöscht");
+        }
+
+        [Command("Flush")]
+        public async Task Flush()
+        {
+            if (!await CheckUser(Config.Current.FlushRoles))
+                return;
+
+            Looter.Flush();
+
+            await ReplyAsync("Alles gelöscht");
         }
 
         [Command("HtmlMemeDump")]
@@ -54,7 +93,7 @@ namespace DisBot
 
     public class Configuration : ModuleBase
     {
-        [Command("RCFG")]
+        [Command("RWCFG")]
         public async Task ReWriteConfig()
         {
             Config.Current.Write();

@@ -16,6 +16,7 @@ namespace DisBot
         public string LootLocation { get; set; } = $@"{Directory.GetCurrentDirectory()}\loot.lt";
         public string[] Curses { get; set; } = { "Hure" };
         public string[] AllowedRoles { get; set; } = { "MemeGesalbter" };
+        public string[] FlushRoles { get; set; } = { };
         private static Config _current;
 
         public static Config Current => _current ?? (_current = Load());

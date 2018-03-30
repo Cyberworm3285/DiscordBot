@@ -13,7 +13,7 @@ namespace DisBot
     public static class Looter
     {
         private static LootTable<string> _loot;
-        private static Dictionary<int, string> _base;
+        private static List<KeyValuePair<int, string>> _base;
         private static bool _initialized = false;
 
         public static string Next
@@ -41,15 +41,15 @@ namespace DisBot
         {
             try
             {
-                _base = JsonConvert.DeserializeObject<Dictionary<int, string>>(File.ReadAllText(Config.Current.LootLocation));
+                _base = JsonConvert.DeserializeObject<List<KeyValuePair<int, string>>>(File.ReadAllText(Config.Current.LootLocation));
                 _loot = new LootTable<string>(_base);
                 return true;
             }
             catch
             {
-                _base = new Dictionary<int, string>
+                _base = new List<KeyValuePair<int, string>>
                 {
-                    { 1000, "http://bc01.rp-online.de/polopoly_fs/63-millionen-rtl-zuschauschuldnerberatpetzwegat-familien-finanzklemme-1.503632.1315967723!httpImage/587917878.jpg_gen/derivatives/dx510/587917878.jpg" }
+                    new KeyValuePair<int, string> (1000, "http://bc01.rp-online.de/polopoly_fs/63-millionen-rtl-zuschauschuldnerberatpetzwegat-familien-finanzklemme-1.503632.1315967723!httpImage/587917878.jpg_gen/derivatives/dx510/587917878.jpg")
                 };
                 _loot = new LootTable<string>(_base);
                 return false;
@@ -64,23 +64,24 @@ namespace DisBot
         public static void AddURL(string url, int rarity)
         {
             rarity = (rarity < 1) ? 1 : (rarity > 1000) ? 1000 : rarity;
-            _base.Add(rarity, url);
+            _base.Add(new KeyValuePair<int, string>(rarity, url));
             _loot = new LootTable<string>(_base);
             UpdateURLs();
         }
 
         public static int Delete(params string[] values)
         {
-            List<int> temp = _base
-                .Where(x => values.Contains(x.Value))
-                .Select(x => x.Key)
-                .ToList();
-
-            temp.ForEach(x => _base.Remove(x));
+            int c = _base.RemoveAll(x => values.Contains(x.Value));
 
             _loot = new LootTable<string>(_base);
             UpdateURLs();
-            return temp.Count;
+            return c;
+        }
+
+        public static void Flush()
+        {
+            _base = new List<KeyValuePair<int, string>>();
+            _loot = new LootTable<string>();
         }
 
         public static string GetHTMLFormattedOverview() =>
