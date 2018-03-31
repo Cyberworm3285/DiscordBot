@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 
 using Loot4Standard.Looting;
+using System.Net;
 
 namespace DisBot
 {
@@ -61,12 +62,27 @@ namespace DisBot
             File.WriteAllText(Config.Current.LootLocation, JsonConvert.SerializeObject(_base, Formatting.Indented));
         }
 
-        public static void AddURL(string url, int rarity)
+        public static bool AddURL(string url, int rarity)
         {
+            bool exists;
+            try
+            {
+                HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url);
+                request.Method = "HEAD";
+                request.GetResponse();
+                exists = true;
+            }
+            catch
+            {
+                exists = false;
+            }
+            if (!exists || !new[] { ".png", ".jpg", "gif" }.Any(x => url.EndsWith(x, StringComparison.InvariantCultureIgnoreCase)))
+                return false;
             rarity = (rarity < 1) ? 1 : (rarity > 1000) ? 1000 : rarity;
             _base.Add(new KeyValuePair<int, string>(rarity, url));
             _loot = new LootTable<string>(_base);
             UpdateURLs();
+            return true;
         }
 
         public static int Delete(params string[] values)

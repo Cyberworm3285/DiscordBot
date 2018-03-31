@@ -41,8 +41,11 @@ namespace DisBot
         {
             if (!await CheckUser(Config.Current.AllowedRoles))
                 return;
-
-            Looter.AddURL(url, rarity);
+            if (!Looter.AddURL(url, rarity))
+            {
+                await ReplyAsync("Die Url is retarded.. glaub ich zumindest");
+                return;
+            }
             await ReplyAsync($"{Context.User} hat in {Context.Channel} einen Eintrag hinzugefügt");
             await Context.Channel.DeleteMessagesAsync(new[] { Context.Message.Id });
         }
@@ -59,8 +62,10 @@ namespace DisBot
                 int r = 0;
                 if (int.TryParse(input[i], out r))
                 {
-                    Looter.AddURL(input[i + 1], r);
-                    c++;
+                    if (Looter.AddURL(input[i + 1], r))
+                        c++;
+                    else
+                        await ReplyAsync($"<{input[i+1]}> ist keine gültige URL");
                 }
                 else
                     await ReplyAsync($"Keine Zahl ({input[i]}), Element {i/2+1} wird übersprungen");
@@ -76,7 +81,7 @@ namespace DisBot
         }
 
         [Command("Delete")]
-        public async Task Delete(string value, int count)
+        public async Task Delete(string value)
         {
             int c = Looter.Delete(value);
             await ReplyAsync($"{Context.User} hat {((c != 1) ? c + " Einträge" : "einen Eintrag")} gelöscht");
