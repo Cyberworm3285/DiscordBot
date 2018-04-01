@@ -17,11 +17,34 @@ namespace DisBot
         [Command("Meme"), Alias("Gimme")]
         public async Task Loot()
         {
+            string url = Looter.Next;
+            if (url.EndsWith(".gifv"))
+            {
+                await ReplyAsync(url);
+                return;
+            }
             var builder = new EmbedBuilder
             {
                 Color = new Color(200, 160, 50),
             };
-            builder.ImageUrl = Looter.Next;
+            builder.ImageUrl = url;
+            await ReplyAsync("", false, builder.Build());
+        }
+
+        [Command("Force")]
+        public async Task Force(int index)
+        {
+            string url = Looter.ForceMeme(index);
+            if (url.EndsWith(".gifv") || url.EndsWith(".mp4") || url.StartsWith("https://www.youtube.com/watch?"))
+            {
+                await ReplyAsync(url);
+                return;
+            }
+            var builder = new EmbedBuilder
+            {
+                Color = new Color(200, 160, 50),
+            };
+            builder.ImageUrl = url;
             await ReplyAsync("", false, builder.Build());
         }
 

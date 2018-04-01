@@ -62,6 +62,8 @@ namespace DisBot
             File.WriteAllText(Config.Current.LootLocation, JsonConvert.SerializeObject(_base, Formatting.Indented));
         }
 
+        public static string ForceMeme(int index) => _base[index].Value.URL;
+
         public static bool AddURL(string url, int rarity, string username, string id)
         {
             bool exists;
@@ -76,7 +78,11 @@ namespace DisBot
             {
                 exists = false;
             }
-            if (!exists || !new[] { ".png", ".jpg", "gif" }.Any(x => url.EndsWith(x, StringComparison.InvariantCultureIgnoreCase)))
+            if (
+                (!exists 
+                || !new[] { ".png", ".jpg", "gif", ".gifv", ".mp4" }.Any(x => url.EndsWith(x, StringComparison.InvariantCultureIgnoreCase))) 
+                && !url.StartsWith("https://www.youtube.com/watch?")
+                )
                 return false;
             rarity = (rarity < 1) ? 1 : (rarity > 1000) ? 1000 : rarity;
             _base.Add(new KeyValuePair<int, Meme>(rarity, new Meme(url, username, id)));
