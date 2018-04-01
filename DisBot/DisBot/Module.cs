@@ -37,17 +37,23 @@ namespace DisBot
         }
 
         [Command("Add")]
-        public async Task AddLoot(string url, int rarity = 1000)
+        public async Task AddLoot(string url, int rarity = 500)
         {
             if (!await CheckUser(Config.Current.AllowedRoles))
                 return;
-            if (!Looter.AddURL(url, rarity))
+            if (Looter.Contains(url) && !Config.Current.AllowDuplicates)
+            {
+                await ReplyAsync("Url is schon drin ma boi");
+                return;
+            }
+            if (!Looter.AddURL(url, rarity, Context.User.Username, Context.User.Id.ToString()))
             {
                 await ReplyAsync("Die Url is retarded.. glaub ich zumindest");
                 return;
             }
             await ReplyAsync($"{Context.User} hat in {Context.Channel} einen Eintrag hinzugefügt");
-            await Context.Channel.DeleteMessagesAsync(new[] { Context.Message.Id });
+            if (Config.Current.DeleteAddRequests)
+                await Context.Channel.DeleteMessagesAsync(new[] { Context.Message.Id });
         }
 
         [Command("AddRange")]
@@ -62,7 +68,9 @@ namespace DisBot
                 int r = 0;
                 if (int.TryParse(input[i], out r))
                 {
-                    if (Looter.AddURL(input[i + 1], r))
+                    if (Looter.Contains(input[i + 1]) && !Config.Current.AllowDuplicates)
+                        await ReplyAsync($"Url <{input[i+1]}> is schon drin ma boi");
+                    else if (Looter.AddURL(input[i + 1], r, Context.User.Username, Context.User.Id.ToString()))
                         c++;
                     else
                         await ReplyAsync($"<{input[i+1]}> ist keine gültige URL");
@@ -85,6 +93,12 @@ namespace DisBot
         {
             int c = Looter.Delete(value);
             await ReplyAsync($"{Context.User} hat {((c != 1) ? c + " Einträge" : "einen Eintrag")} gelöscht");
+        }
+
+        [Command("Deleteindex")]
+        public async Task DeleteIndex(int index)
+        {
+            await ReplyAsync(Looter.Delete(index) ? $"{Context.User} hat einen Eintrag gelöscht" : $"index {index} konnte nicht gelöscht werden");
         }
 
         [Command("Flush")]

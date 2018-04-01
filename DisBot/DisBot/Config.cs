@@ -17,6 +17,9 @@ namespace DisBot
         public string[] Curses { get; set; } = { "Hure" };
         public string[] AllowedRoles { get; set; } = { "MemeGesalbter" };
         public string[] FlushRoles { get; set; } = { };
+        public bool AllowDuplicates { get; set; } = false;
+        public bool DeleteAddRequests { get; set; } = true;
+
         private static Config _current;
 
         public static Config Current => _current ?? (_current = Load());
