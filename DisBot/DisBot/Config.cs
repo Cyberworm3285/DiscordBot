@@ -14,6 +14,7 @@ namespace DisBot
         private static Random rand = new Random();
         public string Token { get; set; } = null;
         public string LootLocation { get; set; } = $@"{Directory.GetCurrentDirectory()}\loot.lt";
+        public string ShortcutLocation { get; set; } = $@"{Directory.GetCurrentDirectory()}\shortcuts.sc";
         public string[] Curses { get; set; } = { "Hure" };
         public string[] AllowedRoles { get; set; } = { "MemeGesalbter" };
         public string[] FlushRoles { get; set; } = { };
@@ -32,6 +33,7 @@ namespace DisBot
         {
             try
             {
+                Console.WriteLine(Directory.GetCurrentDirectory());
                 _current = JsonConvert.DeserializeObject<Config>(File.ReadAllText($@"{Directory.GetCurrentDirectory()}\config.cfg"));
                 return _current;
             }

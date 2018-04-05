@@ -11,10 +11,18 @@ using System.Net;
 
 namespace DisBot
 {
+    [Serializable]
+    public class ShortCuts : Dictionary<string, string>
+    {
+        public ShortCuts() : base(StringComparer.CurrentCultureIgnoreCase) { }
+    }
+
     public static class Looter
     {
         private static LootTable<Meme> _loot;
         private static List<KeyValuePair<int, Meme>> _base;
+        private static ShortCuts _shortcuts;
+
         private static bool _initialized = false;
 
         public static string Next
@@ -27,6 +35,8 @@ namespace DisBot
         }
         public static string Last { get; private set; }
 
+        public static IEnumerable<string> Shorts => _shortcuts.Select(x => x.Key);
+
         public static void Init()
         {
             if (_initialized)
@@ -35,6 +45,7 @@ namespace DisBot
                 _initialized = true;
 
             TryLoadURLs();
+            TryLoadShortcuts();
             Console.WriteLine("Looter initialized");
         }
 
@@ -50,7 +61,7 @@ namespace DisBot
             {
                 _base = new List<KeyValuePair<int, Meme>>
                 {
-                    new KeyValuePair<int, Meme> (1000, new Meme("http://bc01.rp-online.de/polopoly_fs/63-millionen-rtl-zuschauschuldnerberatpetzwegat-familien-finanzklemme-1.503632.1315967723!httpImage/587917878.jpg_gen/derivatives/dx510/587917878.jpg", "Dummmy", Math.Round(Math.PI, 6).ToString()))
+                    new KeyValuePair<int, Meme> (500, new Meme("http://bc01.rp-online.de/polopoly_fs/63-millionen-rtl-zuschauschuldnerberatpetzwegat-familien-finanzklemme-1.503632.1315967723!httpImage/587917878.jpg_gen/derivatives/dx510/587917878.jpg", "Dummmy", Math.Round(Math.PI, 6).ToString()))
                 };
                 _loot = new LootTable<Meme>(_base);
                 return false;
@@ -60,6 +71,25 @@ namespace DisBot
         private static void UpdateURLs()
         {
             File.WriteAllText(Config.Current.LootLocation, JsonConvert.SerializeObject(_base, Formatting.Indented));
+        }
+
+        private static bool TryLoadShortcuts()
+        {
+            try
+            {
+                _shortcuts = JsonConvert.DeserializeObject<ShortCuts>(File.ReadAllText(Config.Current.ShortcutLocation));
+                return true;
+            }
+            catch
+            {
+                _shortcuts = new ShortCuts();
+                return false;
+            }
+        }
+
+        private static void UpdateShortcuts()
+        {
+            File.WriteAllText(Config.Current.ShortcutLocation, JsonConvert.SerializeObject(_shortcuts, Formatting.Indented));
         }
 
         public static string ForceMeme(int index) => _base[index].Value.URL;
@@ -126,18 +156,59 @@ namespace DisBot
         {
             int c = 0, sub = 0;
             return 
-                $"<html>\n\t<body>\n"
-                +string.Join("\n", 
+                $"<html>"
+                + "\n\t\t<style>"
+                + "\n\t* {font-family: Arial; font-size: 16px;}"
+                + "\n\t.main-container {display: flex;flex-wrap: wrap; }"
+                + "\n\t.item-container {  flex-grow: 1; margin: 0 5px 5px 0; border: 0px solid black;}"
+                + "\n\t.item-container .top-row { display: flex; box-sizing: border-box;}"
+                + "\n\t.top-row div {padding: 10px; border-right: 0px solid black; flex-grow: 1;}"
+                + "\n\t.top-row div:nth-child(1) {background-color: #FDE74C;}"
+                + "\n\t.top-row div:nth-child(2) {background-color: #5BC0EB;}"
+                + "\n\t.top-row div:nth-child(3) {background-color: #9BC53D;}"
+                + "\n\t.top-row div:nth-last-child(1) {border-right: 0px solid black; background-color: #FC7753; }"
+                + "\n\t.item-container .image{padding-top:56.29%;background-size:cover;background-repeat:no-repeat;}"
+                + "\n\t</style>"
+                + "\n\t<body>"
+                + "\n\t\t<div class='main-container'>"
+                + string.Join("\n", 
                     _loot.Select(x => 
                     {
-                        string s = $"\t\t<p><h1 style=\"font-family:verdana;\">{c++} :: {x.Key - sub} submitted by {x.Value.Username} ({x.Value.ID})</h1></p>\n\t\t<p><img src=\"{x.Value.URL}\" alt=\"{x.Value.URL}\" style=\"max-height: 300px;\"></p>";
+                        string s = $"\t\t\t<div class='item-container'><div class='top-row'><div>{c++}</div><div>{x.Key - sub}</div><div>{x.Value.Username}</div><div>{x.Value.ID}</div></div><div class='image' style='background-image: url({x.Value.URL})'></div></div>";
                         sub = x.Key;
                         return s;
                     })
                 )
-                +"\n\t</body>\n</html>";
+                + "\n\t</div>"
+                + "\n\t</body>\n</html>";
         }
 
         public static bool Contains(string s) => _loot.Any(x => x.Value.URL == s);
+
+        public static bool AddShortcut(string s, int index)
+        {
+            if (_shortcuts.TryAdd(s, _base[index].Value.URL))
+            {
+                UpdateShortcuts();
+                return false;
+            }
+            _shortcuts.Remove(s);
+            _shortcuts.Add(s, _base[index].Value.URL);
+            UpdateShortcuts();
+            return true;
+
+        }
+
+        public static bool DeleteShortcut(string s) =>
+            _shortcuts.Remove(s);
+
+        public static (string url, bool exists) ProcessShortcut(string s)
+        {
+            string res = null;
+            if (_shortcuts.TryGetValue(s, out res))
+                return (res, true);
+            else
+                return (null, false);
+        }
     }
 }

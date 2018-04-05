@@ -118,7 +118,7 @@ namespace DisBot
             await ReplyAsync($"{Context.User} hat {((c != 1) ? c + " Einträge" : "einen Eintrag")} gelöscht");
         }
 
-        [Command("Deleteindex")]
+        [Command("Deleteindex"), Alias("KillAt")]
         public async Task DeleteIndex(int index)
         {
             await ReplyAsync(Looter.Delete(index) ? $"{Context.User} hat einen Eintrag gelöscht" : $"index {index} konnte nicht gelöscht werden");
@@ -142,6 +142,45 @@ namespace DisBot
             File.WriteAllText(path, Looter.GetHTMLFormattedOverview());
             await Context.Channel.SendFileAsync(path, $":point_down: {Config.Current.RandomCurse} <3");
             File.Delete(path);
+        }
+
+        [Command("AddShortcut"),]
+        public async Task AddShortcut(string s, int index)
+        {
+            try
+            {
+                if (Looter.AddShortcut(s, index))
+                    await ReplyAsync($"shortcut {s} wurde überschrieben");
+                else
+                    await ReplyAsync($"shortcut {s} wurde erstellt");
+            }
+            catch (IndexOutOfRangeException)
+            {
+                await ReplyAsync($"index {index} ist ungültig");
+            }
+        }
+
+        [Command("Shortcut"), Alias("s")]
+        public async Task Shortcut(string s)
+        {
+            var sc = Looter.ProcessShortcut(s);
+            if (!sc.exists)
+            {
+                await ReplyAsync($"Der Shortcut {s} is Müll du {Config.Current.RandomCurse}");
+                return;
+            }
+
+            if (sc.url.EndsWith(".gifv"))
+            {
+                await ReplyAsync(sc.url);
+                return;
+            }
+            var builder = new EmbedBuilder
+            {
+                Color = new Color(200, 160, 50),
+            };
+            builder.ImageUrl = sc.url;
+            await ReplyAsync("", false, builder.Build());
         }
     }
 
@@ -198,6 +237,12 @@ namespace DisBot
                     });
                 }
             }
+            builder.AddField(x => 
+            {
+                x.Name = "Shortcuts";
+                x.Value = string.Join("\n", Looter.Shorts);
+                x.IsInline = false;
+            });
 
             await ReplyAsync("Bidde", false, builder.Build());
         }
