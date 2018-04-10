@@ -258,7 +258,7 @@ namespace DisBot
             if (t.Count < 1)
                 return (null, false);
 
-            return (t.Rand(), true);
+            return (t.Rand().item, true);
         }
 
         #endregion
