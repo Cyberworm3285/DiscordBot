@@ -20,6 +20,8 @@ namespace DisBot
         public string[] FlushRoles { get; set; } = { };
         public bool AllowDuplicates { get; set; } = false;
         public bool DeleteAddRequests { get; set; } = true;
+        public string[] Prefixes { get; set; } = new[] { "https://www.youtube.com/watch?" };
+        public string[] Suffixes { get; set; } = new[] { ".png", ".jpg", "gif", ".gifv", ".mp4" };
 
         private static Config _current;
 

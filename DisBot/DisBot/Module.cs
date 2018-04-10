@@ -25,11 +25,15 @@ namespace DisBot
             }
             var builder = new EmbedBuilder
             {
+                Title = $"{Looter.IndexOf(url)}",
                 Color = new Color(200, 160, 50),
             };
             builder.ImageUrl = url;
             await ReplyAsync("", false, builder.Build());
         }
+
+        [Command("M")]
+        public async Task Loot2() => await Loot();
 
         [Command("Force")]
         public async Task Force(int index)
@@ -69,12 +73,13 @@ namespace DisBot
                 await ReplyAsync("Url is schon drin ma boi");
                 return;
             }
-            if (!Looter.AddURL(url, rarity, Context.User.Username, Context.User.Id.ToString()))
+            var res = Looter.AddURL(url, rarity, Context.User.Username, Context.User.Id.ToString());
+            if (!res.success)
             {
                 await ReplyAsync("Die Url is retarded.. glaub ich zumindest");
                 return;
             }
-            await ReplyAsync($"{Context.User} hat in {Context.Channel} einen Eintrag hinzugefügt");
+            await ReplyAsync($"{Context.User} hat in {Context.Channel} einen Eintrag hinzugefügt [{res.index}]");
             if (Config.Current.DeleteAddRequests)
                 await Context.Channel.DeleteMessagesAsync(new[] { Context.Message.Id });
         }
@@ -93,7 +98,7 @@ namespace DisBot
                 {
                     if (Looter.Contains(input[i + 1]) && !Config.Current.AllowDuplicates)
                         await ReplyAsync($"Url <{input[i+1]}> is schon drin ma boi");
-                    else if (Looter.AddURL(input[i + 1], r, Context.User.Username, Context.User.Id.ToString()))
+                    else if (Looter.AddURL(input[i + 1], r, Context.User.Username, Context.User.Id.ToString()).success)
                         c++;
                     else
                         await ReplyAsync($"<{input[i+1]}> ist keine gültige URL");

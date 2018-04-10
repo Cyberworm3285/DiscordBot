@@ -33,6 +33,9 @@ namespace DisBot
                 return Last;
             }
         }
+
+        public static int IndexOf(string url) => _base.FindIndex(x => x.Value.URL == url);
+
         public static string Last { get; private set; }
 
         public static IEnumerable<string> Shorts => _shortcuts.Select(x => x.Key);
@@ -94,7 +97,7 @@ namespace DisBot
 
         public static string ForceMeme(int index) => _base[index].Value.URL;
 
-        public static bool AddURL(string url, int rarity, string username, string id)
+        public static (bool success, int index) AddURL(string url, int rarity, string username, string id)
         {
             bool exists;
             try
@@ -110,15 +113,15 @@ namespace DisBot
             }
             if (
                 (!exists 
-                || !new[] { ".png", ".jpg", "gif", ".gifv", ".mp4" }.Any(x => url.EndsWith(x, StringComparison.InvariantCultureIgnoreCase))) 
-                && !url.StartsWith("https://www.youtube.com/watch?")
+                || !Config.Current.Suffixes.Any(x => url.EndsWith(x, StringComparison.InvariantCultureIgnoreCase))) 
+                && !Config.Current.Prefixes.Any(x => url.StartsWith(x))
                 )
-                return false;
+                return (false, -1);
             rarity = (rarity < 1) ? 1 : (rarity > 1000) ? 1000 : rarity;
             _base.Add(new KeyValuePair<int, Meme>(rarity, new Meme(url, username, id)));
             _loot = new LootTable<Meme>(_base);
             UpdateURLs();
-            return true;
+            return (true, _base.Count - 1);
         }
 
         public static int Delete(string value)
