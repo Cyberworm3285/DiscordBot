@@ -25,13 +25,13 @@ namespace DisBot
             switch (m.Type)
             {
                 case MemeType.LinkOnly:
-                    await ReplyAsync($"[{index}] {m.URL}");
+                    await ReplyAsync($"{(index==-1?null:"["+index+"]")} {m.URL}");
                     break;
 
                 case MemeType.Embed:
                     var builder = new EmbedBuilder
                     {
-                        Title = index.ToString(),
+                        Title = (index == -1 ? null : "[" + index + "]"),
                         Color = new Color(200, 160, 50),
                     };
                     builder.ImageUrl = m.URL;
@@ -50,7 +50,7 @@ namespace DisBot
         [Command("Force")]
         public async Task Force(int index)
         {
-            await ProcessMeme(Looter.ForceMeme(index));
+            await ProcessMeme(Looter.ForceMeme(index), index);
         }
 
         private async Task<bool> CheckUser(string[] roles)
@@ -150,7 +150,7 @@ namespace DisBot
         [Command("AddTag")]
         public async Task AddTag(string t, int index)
         {
-            if (!Looter.AddShortcut(t, index))
+            if (!Looter.AddTag(t, index))
             {
                 await ReplyAsync($"ne");
                 return;

@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <Reference Include="Loot4Standard">
-      <HintPath>..\..\..\Loot4Standard\Loot4Standard\Loot4Standard\bin\Debug\netstandard1.2\Loot4Standard.dll</HintPath>
+      <HintPath>..\..\..\..\..\..\Source\Repos\Loot4Standard\Loot4Standard\Loot4Standard\bin\Debug\netstandard1.2\Loot4Standard.dll</HintPath>
     </Reference>
   </ItemGroup>
 

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using System.Linq;
+using Newtonsoft.Json;
 
 namespace DisBot
 {
@@ -27,12 +28,13 @@ namespace DisBot
             ID = id;
             Type = type;
 
-            if (tags.Length > 0)
+            if (tags != null || tags.Length > 0)
             {
                 Array.ForEach(tags, x => Tags.Add(x));
             }
         }
 
+        [JsonConstructor]
         private Meme() { }
     }
 }

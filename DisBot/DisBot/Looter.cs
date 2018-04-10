@@ -241,6 +241,7 @@ namespace DisBot
                 return false;
 
             _base[index].Tags.Add(s);
+            UpdateURLs();
             return true;
         }
 
