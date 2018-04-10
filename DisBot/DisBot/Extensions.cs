@@ -15,5 +15,11 @@ namespace DisBot
             var t = e.ToArray();
             return t[rand.Next(t.Length)];
         }
+
+        public static (T item, int index) Rand<T>(this List<T> l)
+        {
+            int index = rand.Next(l.Count);
+            return (l[index], index);
+        }
     }
 }

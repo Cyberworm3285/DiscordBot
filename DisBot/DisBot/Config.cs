@@ -22,6 +22,8 @@ namespace DisBot
         public bool DeleteAddRequests { get; set; } = true;
         public string[] Prefixes { get; set; } = new[] { "https://www.youtube.com/watch?" };
         public string[] Suffixes { get; set; } = new[] { ".png", ".jpg", "gif", ".gifv", ".mp4" };
+        public string[] ExceptionPrefixes { get; set; } = new[] { "https://www.youtube.com/watch?" };
+        public string[] ExceptionSuffixes { get; set; } = new[] { ".gifv", ".mp4", };
 
         private static Config _current;
 

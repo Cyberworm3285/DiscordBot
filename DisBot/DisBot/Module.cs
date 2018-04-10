@@ -14,42 +14,43 @@ namespace DisBot
 {
     public class Memes : ModuleBase
     {
-        [Command("Meme"), Alias("Gimme")]
-        public async Task Loot()
+        public async Task ProcessMeme(Meme m, int index = -1)
         {
-            string url = Looter.Next;
-            if (url.EndsWith(".gifv"))
+            if (m == null)
             {
-                await ReplyAsync(url);
+                await ReplyAsync("[nix da]");
                 return;
             }
-            var builder = new EmbedBuilder
+
+            switch (m.Type)
             {
-                Title = $"{Looter.IndexOf(url)}",
-                Color = new Color(200, 160, 50),
-            };
-            builder.ImageUrl = url;
-            await ReplyAsync("", false, builder.Build());
+                case MemeType.LinkOnly:
+                    await ReplyAsync($"[{index}] {m.URL}");
+                    break;
+
+                case MemeType.Embed:
+                    var builder = new EmbedBuilder
+                    {
+                        Title = index.ToString(),
+                        Color = new Color(200, 160, 50),
+                    };
+                    builder.ImageUrl = m.URL;
+                    await ReplyAsync("", false, builder.Build());
+                    break;
+            }
         }
 
-        [Command("M")]
-        public async Task Loot2() => await Loot();
+        [Command("Meme"), Alias("Gimme", "M")]
+        public async Task Loot()
+        {
+            var m = Looter.Next;
+            await ProcessMeme(m.m, m.index);
+        }
 
         [Command("Force")]
         public async Task Force(int index)
         {
-            string url = Looter.ForceMeme(index);
-            if (url.EndsWith(".gifv") || url.EndsWith(".mp4") || url.StartsWith("https://www.youtube.com/watch?"))
-            {
-                await ReplyAsync(url);
-                return;
-            }
-            var builder = new EmbedBuilder
-            {
-                Color = new Color(200, 160, 50),
-            };
-            builder.ImageUrl = url;
-            await ReplyAsync("", false, builder.Build());
+            await ProcessMeme(Looter.ForceMeme(index));
         }
 
         private async Task<bool> CheckUser(string[] roles)
@@ -64,7 +65,7 @@ namespace DisBot
         }
 
         [Command("Add")]
-        public async Task AddLoot(string url, int rarity = 500)
+        public async Task AddLoot(string url, params string[] tags)
         {
             if (!await CheckUser(Config.Current.AllowedRoles))
                 return;
@@ -73,7 +74,7 @@ namespace DisBot
                 await ReplyAsync("Url is schon drin ma boi");
                 return;
             }
-            var res = Looter.AddURL(url, rarity, Context.User.Username, Context.User.Id.ToString());
+            var res = Looter.AddURL(url, Context.User.Username, Context.User.Id.ToString(), tags);
             if (!res.success)
             {
                 await ReplyAsync("Die Url is retarded.. glaub ich zumindest");
@@ -82,38 +83,6 @@ namespace DisBot
             await ReplyAsync($"{Context.User} hat in {Context.Channel} einen Eintrag hinzugefügt [{res.index}]");
             if (Config.Current.DeleteAddRequests)
                 await Context.Channel.DeleteMessagesAsync(new[] { Context.Message.Id });
-        }
-
-        [Command("AddRange")]
-        public async Task AddRange(params string[] input)
-        {
-            if (!await CheckUser(Config.Current.AllowedRoles))
-                return;
-
-            int c = 0;
-            for (int i = 0; i < input.Length; i+=2)
-            {
-                int r = 0;
-                if (int.TryParse(input[i], out r))
-                {
-                    if (Looter.Contains(input[i + 1]) && !Config.Current.AllowDuplicates)
-                        await ReplyAsync($"Url <{input[i+1]}> is schon drin ma boi");
-                    else if (Looter.AddURL(input[i + 1], r, Context.User.Username, Context.User.Id.ToString()).success)
-                        c++;
-                    else
-                        await ReplyAsync($"<{input[i+1]}> ist keine gültige URL");
-                }
-                else
-                    await ReplyAsync($"Keine Zahl ({input[i]}), Element {i/2+1} wird übersprungen");
-            }
-            await ReplyAsync($"{Context.User} hat ({c}/{input.Length/2}) Element/e erfolgreich hinzugefügt");
-        }
-
-        [Command("DeLast")]
-        public async Task DeleteLast()
-        {
-            int c = Looter.Delete(Looter.Last);
-            await ReplyAsync($"{Context.User} hat {((c != 1)?c + " Einträge":"einen Eintrag")} gelöscht");
         }
 
         [Command("Delete")]
@@ -175,17 +144,31 @@ namespace DisBot
                 return;
             }
 
-            if (sc.url.EndsWith(".gifv"))
+            await ProcessMeme(sc.m);
+        }
+
+        [Command("AddTag")]
+        public async Task AddTag(string t, int index)
+        {
+            if (!Looter.AddShortcut(t, index))
             {
-                await ReplyAsync(sc.url);
+                await ReplyAsync($"ne");
                 return;
             }
-            var builder = new EmbedBuilder
+            await ReplyAsync("okay");
+        }
+
+        [Command("Tag"), Alias("T")]
+        public async Task Tag(string t)
+        {
+            var tag = Looter.ProcessTag(t);
+            if (!tag.exists)
             {
-                Color = new Color(200, 160, 50),
-            };
-            builder.ImageUrl = sc.url;
-            await ReplyAsync("", false, builder.Build());
+                await ReplyAsync($"Der Tag {t} is Müll du {Config.Current.RandomCurse}");
+                return;
+            }
+
+            await ProcessMeme(tag.m);
         }
     }
 
