@@ -12,7 +12,29 @@ using Discord;
 
 namespace DisBot
 {
-    public class Memes : ModuleBase
+    public class MyModuleBase : ModuleBase
+    {
+        protected enum Roles
+        {
+            Pleb = 0,
+            Memer,
+            Admin,
+            SuperAdmin
+        }
+
+        protected async Task<bool> CheckUser(Roles requiredRole)
+        {
+            var su = Context.User as SocketGuildUser;
+            if (su == null || Config.Current.CheckUserPermissions(su.Roles.Select(x => x.Name), su.Id) < (int)requiredRole)
+            {
+                await Context.Channel.SendFileAsync(Path.Combine(Directory.GetCurrentDirectory(), "YuNo.jpg"), $"`{Context.User}:{Context.Message}` [<{requiredRole}]");
+                return false;
+            }
+            return true;
+        }
+    }
+
+    public class Memes : MyModuleBase
     {
         public async Task ProcessMeme(Meme m, int index = -1)
         {
@@ -40,6 +62,7 @@ namespace DisBot
             }
         }
 
+
         [Command("Meme"), Alias("Gimme", "M")]
         public async Task Loot()
         {
@@ -53,21 +76,10 @@ namespace DisBot
             await ProcessMeme(Looter.ForceMeme(index), index);
         }
 
-        private async Task<bool> CheckUser(string[] roles)
-        {
-            var su = Context.User as SocketGuildUser;
-            if (!su.Roles.Any(x => roles.Contains(x.Name)))
-            {
-                await Context.Channel.SendFileAsync(Path.Combine(Directory.GetCurrentDirectory(), "YuNo.jpg"), $"`{Context.User}:{Context.Message}`");
-                return false;
-            }
-            return true;
-        }
-
         [Command("Add")]
         public async Task AddLoot(string url, params string[] tags)
         {
-            if (!await CheckUser(Config.Current.AllowedRoles))
+            if (!await CheckUser(Roles.Memer))
                 return;
             if (Looter.Contains(url) && !Config.Current.AllowDuplicates)
             {
@@ -101,7 +113,7 @@ namespace DisBot
         [Command("Flush")]
         public async Task Flush()
         {
-            if (!await CheckUser(Config.Current.FlushRoles))
+            if (!await CheckUser(Roles.Admin))
                 return;
 
             Looter.Flush();
@@ -172,20 +184,144 @@ namespace DisBot
         }
     }
 
-    public class Configuration : ModuleBase
+    [Group("Config")]
+    public class Configuration : MyModuleBase
     {
-        [Command("RWCFG")]
+
+        private async Task Okay() => await ReplyAsync("Okay");
+
+        [Command("RW")]
         public async Task ReWriteConfig()
         {
+            if (await CheckUser(Roles.Admin))
+                return;
             Config.Current.Write();
             await ReplyAsync("Config rewritten");
         }
 
-        [Command("RLCFG")]
+        [Command("RL")]
         public async Task LoadConfig()
         {
+            if (await CheckUser(Roles.Admin))
+                return;
             Config.Load();
             await ReplyAsync("Config loaded");
+        }
+
+        [Command("AddMemer")]
+        public async Task AddMemer(string m)
+        {
+            if (await CheckUser(Roles.Admin))
+                return;
+            Config.Current.AddMemer(m);
+            await ReplyAsync("okay");
+        }
+
+        [Command("RemoveMemer")]
+        public async Task RemoveMemer(string m)
+        {
+            if (await CheckUser(Roles.Admin))
+                return;
+            await ReplyAsync(Config.Current.RemoveMemer(m).OkayNe());
+        }
+
+        [Command("AddAdmin")]
+        public async Task AddAdmin(string a)
+        {
+            Config.Current.AddAdmin(a);
+            await Okay();
+        }
+
+        [Command("RemoveAdmin")]
+        public async Task RemoveAdmin(string a)
+        {
+            if (await CheckUser(Roles.Admin))
+                return;
+            await ReplyAsync(Config.Current.RemoveAdmin(a).OkayNe());
+        }
+
+        [Command("ToggleDuplicates")]
+        public async Task ToggleDuplicates()
+        {
+            if (await CheckUser(Roles.Admin))
+                return;
+            await ReplyAsync($"Duplikate sind {Config.Current.ToggleDuplicates().EinAus()}");
+        }
+
+        [Command("ToggleDelete")]
+        public async Task ToggleDeleteMessages()
+        {
+            if (await CheckUser(Roles.Admin))
+                return;
+            await ReplyAsync($"Löschen ist {Config.Current.ToggleDeleteMessages().EinAus()}");
+        }
+
+        [Command("AddPrefix")]
+        public async Task AddPrefix(string p)
+        {
+            if (await CheckUser(Roles.SuperAdmin))
+                return;
+            Config.Current.AddPrefix(p);
+            await Okay();
+        }
+
+        [Command("RemovePrefix")]
+        public async Task RemovePrefix(string p)
+        {
+            if (await CheckUser(Roles.SuperAdmin))
+                return;
+            await ReplyAsync(Config.Current.RemovePrefix(p).OkayNe());
+        }
+
+        [Command("AddExceptionPrefix")]
+        public async Task AddExceptionPrefix(string p)
+        {
+            if (await CheckUser(Roles.SuperAdmin))
+                return;
+            Config.Current.AddExceptionPrefix(p);
+            await Okay();
+        }
+
+        [Command("RemoveExceptionPrefix")]
+        public async Task RemoveExceptionPrefix(string p)
+        {
+            if (await CheckUser(Roles.SuperAdmin))
+                return;
+            await ReplyAsync(Config.Current.RemoveExceptionPrefix(p).OkayNe());
+        }
+
+        [Command("AddSuffix")]
+        public async Task AddSuffix(string s)
+        {
+            if (await CheckUser(Roles.SuperAdmin))
+                return;
+            Config.Current.AddSuffix(s);
+            await Okay();
+        }
+
+        [Command("RemoveSuffix")]
+        public async Task RemoveSuffix(string s)
+        {
+            if (await CheckUser(Roles.SuperAdmin))
+                return;
+            await ReplyAsync(Config.Current.RemoveSuffix(s).OkayNe());
+        }
+
+        [Command("AddExceptionSuffix")]
+        public async Task AddExceptionSuffix(string s)
+        {
+            if (await CheckUser(Roles.SuperAdmin))
+                return;
+            Config.Current.AddExceptionSuffix(s);
+            await Okay();
+        }
+
+        [Command("RemoveExceptionPrefix")]
+        public async Task RemoveExceptionSuffix(string s)
+        {
+            if (await CheckUser(Roles.SuperAdmin))
+                return;
+            await ReplyAsync(Config.Current.RemoveExceptionSuffix(s).OkayNe());
         }
     }
 
@@ -229,6 +365,12 @@ namespace DisBot
             {
                 x.Name = "Shortcuts";
                 x.Value = string.Join("\n", Looter.Shorts);
+                x.IsInline = false;
+            });
+            builder.AddField(x =>
+            {
+                x.Name = "Tags";
+                x.Value = string.Join("\n", Looter.GetAllTags());
                 x.IsInline = false;
             });
 

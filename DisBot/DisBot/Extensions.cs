@@ -21,5 +21,8 @@ namespace DisBot
             int index = rand.Next(l.Count);
             return (l[index], index);
         }
+
+        public static string OkayNe(this bool b) => (b) ? "Okay" : "Ne";
+        public static string EinAus(this bool b) => (b) ? "An" : "Aus";
     }
 }

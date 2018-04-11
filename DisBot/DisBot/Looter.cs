@@ -9,15 +9,15 @@ using System.Net;
 namespace DisBot
 {
     [Serializable]
-    public class ShortCuts : Dictionary<string, string>
+    public class NCS_String_Dictionary : Dictionary<string, string>
     {
-        public ShortCuts() : base(StringComparer.CurrentCultureIgnoreCase) { }
+        public NCS_String_Dictionary() : base(StringComparer.CurrentCultureIgnoreCase) { }
     }
 
     public static class Looter
     {
         private static List<Meme> _base;
-        private static ShortCuts _shortcuts;
+        private static NCS_String_Dictionary _shortcuts;
         private static bool _initialized = false;
 
         #region Operations
@@ -67,7 +67,7 @@ namespace DisBot
         public static void Flush()
         {
             _base = new List<Meme>();
-            _shortcuts = new ShortCuts();
+            _shortcuts = new NCS_String_Dictionary();
             UpdateURLs();
         }
 
@@ -190,12 +190,12 @@ namespace DisBot
         {
             try
             {
-                _shortcuts = JsonConvert.DeserializeObject<ShortCuts>(File.ReadAllText(Config.Current.ShortcutLocation));
+                _shortcuts = JsonConvert.DeserializeObject<NCS_String_Dictionary>(File.ReadAllText(Config.Current.ShortcutLocation));
                 return true;
             }
             catch
             {
-                _shortcuts = new ShortCuts();
+                _shortcuts = new NCS_String_Dictionary();
                 return false;
             }
         }
@@ -240,7 +240,7 @@ namespace DisBot
             if (index < 0 || index > _base.Count)
                 return false;
 
-            _base[index].Tags.Add(s);
+            _base[index].Tags.Add(s.ToLower());
             UpdateURLs();
             return true;
         }
@@ -255,11 +255,24 @@ namespace DisBot
 
         public static (Meme m, bool exists) ProcessTag(string s)
         {
-            var t = _base.Where(x => x.Tags.Contains(s)).ToList();
+            var t = _base.Where(x => x.Tags.Contains(s.ToLower())).ToList();
             if (t.Count < 1)
                 return (null, false);
 
             return (t.Rand().item, true);
+        }
+
+        public static HashSet<string> GetAllTags()
+        {
+            HashSet<string> set = new HashSet<string>();
+            foreach (var x in _base)
+            {
+                foreach (var y in x.Tags)
+                {
+                    set.Add(y);
+                }
+            }
+            return set;
         }
 
         #endregion
