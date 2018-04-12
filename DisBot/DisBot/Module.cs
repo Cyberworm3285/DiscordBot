@@ -70,7 +70,7 @@ namespace DisBot
             await ProcessMeme(m.m, m.index);
         }
 
-        [Command("Force")]
+        [Command("Force"), Alias("F")]
         public async Task Force(int index)
         {
             await ProcessMeme(Looter.ForceMeme(index), index);
@@ -113,7 +113,7 @@ namespace DisBot
         [Command("Flush")]
         public async Task Flush()
         {
-            if (!await CheckUser(Roles.Admin))
+            if (!await CheckUser(Roles.SuperAdmin))
                 return;
 
             Looter.Flush();
@@ -193,7 +193,7 @@ namespace DisBot
         [Command("RW")]
         public async Task ReWriteConfig()
         {
-            if (await CheckUser(Roles.Admin))
+            if (!await CheckUser(Roles.Admin))
                 return;
             Config.Current.Write();
             await ReplyAsync("Config rewritten");
@@ -202,7 +202,7 @@ namespace DisBot
         [Command("RL")]
         public async Task LoadConfig()
         {
-            if (await CheckUser(Roles.Admin))
+            if (!await CheckUser(Roles.Admin))
                 return;
             Config.Load();
             await ReplyAsync("Config loaded");
@@ -211,7 +211,7 @@ namespace DisBot
         [Command("AddMemer")]
         public async Task AddMemer(string m)
         {
-            if (await CheckUser(Roles.Admin))
+            if (!await CheckUser(Roles.Admin))
                 return;
             Config.Current.AddMemer(m);
             await ReplyAsync("okay");
@@ -220,7 +220,7 @@ namespace DisBot
         [Command("RemoveMemer")]
         public async Task RemoveMemer(string m)
         {
-            if (await CheckUser(Roles.Admin))
+            if (!await CheckUser(Roles.Admin))
                 return;
             await ReplyAsync(Config.Current.RemoveMemer(m).OkayNe());
         }
@@ -228,6 +228,8 @@ namespace DisBot
         [Command("AddAdmin")]
         public async Task AddAdmin(string a)
         {
+            if (!await CheckUser(Roles.SuperAdmin))
+                return;
             Config.Current.AddAdmin(a);
             await Okay();
         }
@@ -235,7 +237,7 @@ namespace DisBot
         [Command("RemoveAdmin")]
         public async Task RemoveAdmin(string a)
         {
-            if (await CheckUser(Roles.Admin))
+            if (!await CheckUser(Roles.SuperAdmin))
                 return;
             await ReplyAsync(Config.Current.RemoveAdmin(a).OkayNe());
         }
@@ -243,7 +245,7 @@ namespace DisBot
         [Command("ToggleDuplicates")]
         public async Task ToggleDuplicates()
         {
-            if (await CheckUser(Roles.Admin))
+            if (!await CheckUser(Roles.Admin))
                 return;
             await ReplyAsync($"Duplikate sind {Config.Current.ToggleDuplicates().EinAus()}");
         }
@@ -251,7 +253,7 @@ namespace DisBot
         [Command("ToggleDelete")]
         public async Task ToggleDeleteMessages()
         {
-            if (await CheckUser(Roles.Admin))
+            if (!await CheckUser(Roles.Admin))
                 return;
             await ReplyAsync($"Löschen ist {Config.Current.ToggleDeleteMessages().EinAus()}");
         }
@@ -259,7 +261,7 @@ namespace DisBot
         [Command("AddPrefix")]
         public async Task AddPrefix(string p)
         {
-            if (await CheckUser(Roles.SuperAdmin))
+            if (!await CheckUser(Roles.SuperAdmin))
                 return;
             Config.Current.AddPrefix(p);
             await Okay();
@@ -268,7 +270,7 @@ namespace DisBot
         [Command("RemovePrefix")]
         public async Task RemovePrefix(string p)
         {
-            if (await CheckUser(Roles.SuperAdmin))
+            if (!await CheckUser(Roles.SuperAdmin))
                 return;
             await ReplyAsync(Config.Current.RemovePrefix(p).OkayNe());
         }
@@ -276,7 +278,7 @@ namespace DisBot
         [Command("AddExceptionPrefix")]
         public async Task AddExceptionPrefix(string p)
         {
-            if (await CheckUser(Roles.SuperAdmin))
+            if (!await CheckUser(Roles.SuperAdmin))
                 return;
             Config.Current.AddExceptionPrefix(p);
             await Okay();
@@ -285,7 +287,7 @@ namespace DisBot
         [Command("RemoveExceptionPrefix")]
         public async Task RemoveExceptionPrefix(string p)
         {
-            if (await CheckUser(Roles.SuperAdmin))
+            if (!await CheckUser(Roles.SuperAdmin))
                 return;
             await ReplyAsync(Config.Current.RemoveExceptionPrefix(p).OkayNe());
         }
@@ -293,7 +295,7 @@ namespace DisBot
         [Command("AddSuffix")]
         public async Task AddSuffix(string s)
         {
-            if (await CheckUser(Roles.SuperAdmin))
+            if (!await CheckUser(Roles.SuperAdmin))
                 return;
             Config.Current.AddSuffix(s);
             await Okay();
@@ -302,7 +304,7 @@ namespace DisBot
         [Command("RemoveSuffix")]
         public async Task RemoveSuffix(string s)
         {
-            if (await CheckUser(Roles.SuperAdmin))
+            if (!await CheckUser(Roles.SuperAdmin))
                 return;
             await ReplyAsync(Config.Current.RemoveSuffix(s).OkayNe());
         }
@@ -310,7 +312,7 @@ namespace DisBot
         [Command("AddExceptionSuffix")]
         public async Task AddExceptionSuffix(string s)
         {
-            if (await CheckUser(Roles.SuperAdmin))
+            if (!await CheckUser(Roles.SuperAdmin))
                 return;
             Config.Current.AddExceptionSuffix(s);
             await Okay();
@@ -319,7 +321,7 @@ namespace DisBot
         [Command("RemoveExceptionPrefix")]
         public async Task RemoveExceptionSuffix(string s)
         {
-            if (await CheckUser(Roles.SuperAdmin))
+            if (!await CheckUser(Roles.SuperAdmin))
                 return;
             await ReplyAsync(Config.Current.RemoveExceptionSuffix(s).OkayNe());
         }
@@ -375,6 +377,13 @@ namespace DisBot
             });
 
             await ReplyAsync("Bidde", false, builder.Build());
+        }
+
+        [Command("Find")]
+        public async Task FindIndex(string URL)
+        {
+            int index = Looter.IndexOf(URL);
+            await ReplyAsync((index == -1) ? "nichts gefunden" : index.ToString());
         }
     }
 }

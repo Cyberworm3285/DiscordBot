@@ -24,7 +24,7 @@ namespace DisBot
         public bool AllowDuplicates { get; set; } = false;
         public bool DeleteAddRequests { get; set; } = true;
         public HashSet<string> Prefixes { get; set; } = new HashSet<string> { "https://www.youtube.com/watch?" };
-        public HashSet<string> Suffixes { get; set; } = new HashSet<string> { ".png", ".jpg", "gif", ".gifv", ".mp4" };
+        public HashSet<string> Suffixes { get; set; } = new HashSet<string> { ".png", ".jpg", ".gif", ".gifv", ".mp4" };
         public HashSet<string> ExceptionPrefixes { get; set; } = new HashSet<string> { "https://www.youtube.com/watch?" };
         public HashSet<string> ExceptionSuffixes { get; set; } = new HashSet<string> { ".gifv", ".mp4", };
 
