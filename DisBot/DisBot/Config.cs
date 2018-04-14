@@ -19,8 +19,7 @@ namespace DisBot
         public List<string> Curses { get; set; } = new List<string>{ "Hure" };
         public HashSet<string> MemerRoles { get; set; } = new HashSet<string> { "MemeGesalbter" };
         public HashSet<string> AdminRoles { get; set; } = new HashSet<string> { };
-        [JsonIgnore]
-        public ulong SuperAdminID = 250245694965678080;
+        public ulong SuperAdminID { get; set; } = 0;
         public bool AllowDuplicates { get; set; } = false;
         public bool DeleteAddRequests { get; set; } = true;
         public HashSet<string> Prefixes { get; set; } = new HashSet<string> { "https://www.youtube.com/watch?" };
@@ -41,7 +40,7 @@ namespace DisBot
             try
             {
                 Console.WriteLine(Directory.GetCurrentDirectory());
-                _current = JsonConvert.DeserializeObject<Config>(File.ReadAllText($@"{Directory.GetCurrentDirectory()}\config.cfg"));
+                _current = JsonConvert.DeserializeObject<Config>(File.ReadAllText($@"{Directory.GetCurrentDirectory()}\configBoi.cfg"));
                 return _current;
             }
             catch

@@ -301,3 +301,6 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+#Die scheiß COnfig
+ConfigBoi.cfg
