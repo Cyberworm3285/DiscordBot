@@ -51,7 +51,7 @@ namespace DisBot
             }
         }
 
-        public void Write() => File.WriteAllText($@"{Directory.GetCurrentDirectory()}\config.cfg", JsonConvert.SerializeObject(this, Formatting.Indented));
+        public void Write() => File.WriteAllText($@"{Directory.GetCurrentDirectory()}\configBoi.cfg", JsonConvert.SerializeObject(this, Formatting.Indented));
 
         public int CheckUserPermissions(IEnumerable<string> roles, ulong id)
         {
