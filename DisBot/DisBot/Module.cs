@@ -44,16 +44,17 @@ namespace DisBot
                 return;
             }
 
+            string title = $"{(index == -1 ? null : "[" + index + "]")}{(m.Tags.Count == 0 ? "" : " Tags[" + string.Join(",", m.Tags) + "]")}";
             switch (m.Type)
             {
                 case MemeType.LinkOnly:
-                    await ReplyAsync($"{(index==-1?null:"["+index+"]")} {m.URL}");
+                    await ReplyAsync(title + " " + m.URL);
                     break;
 
                 case MemeType.Embed:
                     var builder = new EmbedBuilder
                     {
-                        Title = (index == -1 ? null : "[" + index + "]"),
+                        Title = title,
                         Color = new Color(200, 160, 50),
                     };
                     builder.ImageUrl = m.URL;
@@ -76,7 +77,7 @@ namespace DisBot
             await ProcessMeme(Looter.ForceMeme(index), index);
         }
 
-        [Command("Add")]
+        [Command("Add"), Alias("A")]
         public async Task AddLoot(string url, params string[] tags)
         {
             if (!await CheckUser(Roles.Memer))
@@ -113,12 +114,14 @@ namespace DisBot
         [Command("Flush")]
         public async Task Flush()
         {
-            if (!await CheckUser(Roles.SuperAdmin))
-                return;
-
-            Looter.Flush();
-
-            await ReplyAsync("Alles gelöscht");
+            await ReplyAsync("das willst du nicht");
+            return;
+            //if (!await CheckUser(Roles.SuperAdmin))
+            //    return;
+            //
+            //Looter.Flush();
+            //
+            //await ReplyAsync("Alles gelöscht");
         }
 
         [Command("Dump")]
@@ -130,7 +133,7 @@ namespace DisBot
             File.Delete(path);
         }
 
-        [Command("AddShortcut"),]
+        [Command("AddShortcut"), Alias("AS")]
         public async Task AddShortcut(string s, int index)
         {
             try
@@ -150,7 +153,7 @@ namespace DisBot
         public async Task Shortcut(string s)
         {
             var sc = Looter.ProcessShortcut(s);
-            if (!sc.exists)
+            if (sc.index == -1)
             {
                 await ReplyAsync($"Der Shortcut {s} is Müll du {Config.Current.RandomCurse}");
                 return;
@@ -159,7 +162,7 @@ namespace DisBot
             await ProcessMeme(sc.m);
         }
 
-        [Command("AddTag")]
+        [Command("AddTag"), Alias("AT")]
         public async Task AddTag(string t, int index)
         {
             if (!Looter.AddTag(t, index))
@@ -170,11 +173,22 @@ namespace DisBot
             await ReplyAsync("okay");
         }
 
+        [Command("DeleteTag"), Alias("DT")]
+        public async Task DeleteTag(string t, int index)
+        {
+            if(!Looter.DeleteTag(t, index))
+            {
+                await ReplyAsync("ne");
+                return;
+            }
+            await ReplyAsync("okay");
+        }
+
         [Command("Tag"), Alias("T")]
         public async Task Tag(string t)
         {
             var tag = Looter.ProcessTag(t);
-            if (!tag.exists)
+            if (tag.index == -1)
             {
                 await ReplyAsync($"Der Tag {t} is Müll du {Config.Current.RandomCurse}");
                 return;
@@ -336,7 +350,7 @@ namespace DisBot
             _service = service;
         }
 
-        [Command("Help")]
+        [Command("Help"), Alias("?")]
         public async Task Help()
         {
             var builder = new EmbedBuilder()
@@ -351,7 +365,7 @@ namespace DisBot
                 {
                     var result = await c.CheckPreconditionsAsync(Context);
                     if (result.IsSuccess)
-                        moduleDesc += $"!{c.Aliases.First()}[{string.Join(",", c.Parameters.Select(x => $"{x.Type.Name}:{x.Name}"))}]\n";
+                        moduleDesc += $"![{(string.Join(",", c.Aliases))}][{string.Join(",", c.Parameters.Select(x => $"{x.Type.Name}:{x.Name}"))}]\n";
                 }
                 if (!string.IsNullOrWhiteSpace(moduleDesc))
                 {
@@ -372,7 +386,7 @@ namespace DisBot
             builder.AddField(x =>
             {
                 x.Name = "Tags";
-                x.Value = string.Join("\n", Looter.GetAllTags());
+                x.Value = string.Join("\n", Looter.GetAllTags().Select(y => $"{y.Key} [{y.Value}]"));
                 x.IsInline = false;
             });
 
@@ -384,6 +398,28 @@ namespace DisBot
         {
             int index = Looter.IndexOf(URL);
             await ReplyAsync((index == -1) ? "nichts gefunden" : index.ToString());
+        }
+
+        [Command("Stats")]
+        public async Task Stats()
+        {
+            EmbedBuilder sb = new EmbedBuilder()
+            {
+                Title = $"Alle stats ({Looter.Count} Meme(s))",
+                Color = new Color(114, 137, 218)
+            };
+
+            var stats = Looter.GetStats();
+            foreach (var x in stats.OrderByDescending(s => s.Value))
+            {
+                sb.AddField(y =>
+                {
+                    y.Name = x.Key;
+                    y.Value = x.Value;
+                });
+            }
+
+            await ReplyAsync("Bidde", false, sb.Build());
         }
     }
 }

@@ -19,6 +19,8 @@ namespace DisBot
         private static List<Meme> _base;
         private static NCS_String_Dictionary _shortcuts;
         private static bool _initialized = false;
+        public static IEnumerable<string> Shorts => _shortcuts.Select(x => $"{x.Key}");
+        public static int Count => _base.Count;
 
         #region Operations
 
@@ -28,7 +30,6 @@ namespace DisBot
 
         public static int IndexOf(string url) => _base.FindIndex(x => x.URL == url);
 
-        public static IEnumerable<string> Shorts => _shortcuts.Select(x => x.Key);
 
         public static void Init()
         {
@@ -102,6 +103,18 @@ namespace DisBot
         }
 
         public static bool Contains(string s) => _base.Any(x => x.URL == s);
+
+        public static Dictionary<string, int> GetStats()
+        {
+            Dictionary<string,int> stats = new Dictionary<string, int>();
+            for (int i = 0; i < _base.Count; i++)
+            {
+                var m = _base[i];
+                if (!stats.TryAdd(m.Username, 1))
+                        stats[m.Username]++;
+            }
+            return stats;
+        }
 
         #endregion
 
@@ -177,7 +190,7 @@ namespace DisBot
                 && !Config.Current.Prefixes.Any(x => url.StartsWith(x))
                 )
                 return (false, -1);
-            _base.Add(new Meme(url, username, id, CheckURL_Type(url), tags));
+            _base.Add(new Meme(url, username, id, CheckURL_Type(url), tags.Select(x => x.ToLower()).ToArray()));
             UpdateURLs();
             return (true, _base.Count - 1);
         }
@@ -222,13 +235,16 @@ namespace DisBot
         public static bool DeleteShortcut(string s) =>
             _shortcuts.Remove(s);
 
-        public static (Meme m, bool exists) ProcessShortcut(string s)
+        public static (Meme m, int index) ProcessShortcut(string s)
         {
             string res = null;
             if (_shortcuts.TryGetValue(s, out res))
-                return (_base.Find(x => x.URL == res), true);
+            {
+                int index = _base.FindIndex(x => x.URL == res);
+                return (_base[index], index);
+            }
             else
-                return (null, false);
+                return (null, -1);
         }
 
         #endregion
@@ -253,26 +269,28 @@ namespace DisBot
             return _base[index].Tags.Remove(s);
         }
 
-        public static (Meme m, bool exists) ProcessTag(string s)
+        public static (Meme m, int index) ProcessTag(string s)
         {
             var t = _base.Where(x => x.Tags.Contains(s.ToLower())).ToList();
             if (t.Count < 1)
-                return (null, false);
+                return (null, -1);
 
-            return (t.Rand().item, true);
+            Meme r = t.Rand().item;
+            return (r, _base.IndexOf(r));
         }
 
-        public static HashSet<string> GetAllTags()
+        public static Dictionary<string, int> GetAllTags()
         {
-            HashSet<string> set = new HashSet<string>();
+            Dictionary<string, int> dic = new Dictionary<string, int>();
             foreach (var x in _base)
             {
                 foreach (var y in x.Tags)
                 {
-                    set.Add(y);
+                    if (!dic.TryAdd(y, 1))
+                        dic[y]++;
                 }
             }
-            return set;
+            return dic;
         }
 
         #endregion
