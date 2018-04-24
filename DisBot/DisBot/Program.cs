@@ -29,6 +29,9 @@ namespace DisBot
             string token = Config.Current.Token;
 
             client = new DiscordSocketClient();
+
+            await client.SetGameAsync("mit deiner Mudda");
+
             commands = new CommandService();
 
             services = new ServiceCollection()
@@ -70,7 +73,7 @@ namespace DisBot
 
             var result = await commands.ExecuteAsync(context, argPos, services);
             if (!result.IsSuccess)
-                await context.Channel.SendMessageAsync(result.ErrorReason);
+                await context.Channel.SendMessageAsync($"Da würd ich an deiner Stelle nochma drüber gucken ({result.ErrorReason})");
         }
     }
 

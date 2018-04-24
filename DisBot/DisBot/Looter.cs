@@ -290,7 +290,23 @@ namespace DisBot
                         dic[y]++;
                 }
             }
-            return dic;
+            return new Dictionary<string, int>(dic.OrderByDescending(x => x.Value));
+        }
+
+        public static int ChangeTagGlobally(string o, string n)
+        {
+            var ts = _base.Where(x => x.Tags.Contains(o)).ToList();
+            if (ts.Count == 0)
+                return 0;
+
+            for (int i = 0; i < ts.Count; i++)
+            {
+                ts[i].Tags.Remove(o);
+                ts[i].Tags.Add(n);
+            }
+
+            UpdateURLs();
+            return ts.Count;
         }
 
         #endregion

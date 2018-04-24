@@ -24,6 +24,8 @@ namespace DisBot
 
         protected async Task<bool> CheckUser(Roles requiredRole)
         {
+            if (Context.User.Id == Config.Current.SuperAdminID)
+                return true;
             var su = Context.User as SocketGuildUser;
             if (su == null || Config.Current.CheckUserPermissions(su.Roles.Select(x => x.Name), su.Id) < (int)requiredRole)
             {
@@ -159,7 +161,7 @@ namespace DisBot
                 return;
             }
 
-            await ProcessMeme(sc.m);
+            await ProcessMeme(sc.m, sc.index);
         }
 
         [Command("AddTag"), Alias("AT")]
@@ -171,6 +173,57 @@ namespace DisBot
                 return;
             }
             await ReplyAsync("okay");
+        }
+
+        [Command("AddTags")]
+        public async Task AddTags(string t, params int[] indices)
+        {
+            if (!await CheckUser(Roles.Memer))
+                return;
+            if (indices == null || indices.Length < 1)
+            {
+                await ReplyAsync("keine indizes angegeben");
+                return;
+            }
+            int c = 0;
+
+            foreach(var x in indices)
+            {
+                if (Looter.AddTag(t, x))
+                    c++;
+            }
+            await ReplyAsync($"{c} tags hinzugefügt");
+        }
+
+        [Command("AddtagsUnsafe")]
+        public async Task AddTags(string t, string input)
+        {
+            string[] parts = input.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries);
+            List<int> indices = new List<int>();
+            List<string> errors = new List<string>();
+            for (int i = 0; i < parts.Length; i++)
+            {
+                int splitIndex;
+                if ((splitIndex = parts[i].IndexOf('-')) == -1)
+                {
+                    int res = 0;
+                    if (int.TryParse(parts[i], out res))
+                        indices.Add(res);
+                    else
+                        errors.Add(parts[i]);
+                }
+                else
+                {
+                    int a = 0, b = 0;
+                    if (!int.TryParse(parts[i].Substring(0, splitIndex), out a) || !int.TryParse(parts[i].Substring(splitIndex + 1), out b))
+                        errors.Add(parts[i]);
+                    else
+                        indices.AddRange(Enumerable.Range(a, b - a + 1));
+                }
+            }
+
+            await ReplyAsync(errors.Count == 0?"keine fehler, leite weiter..":$"{errors.Count} fehler bei [{string.Join(",", errors)}], leite rest weiter");
+            await AddTags(t, indices.ToArray());
         }
 
         [Command("DeleteTag"), Alias("DT")]
@@ -194,7 +247,15 @@ namespace DisBot
                 return;
             }
 
-            await ProcessMeme(tag.m);
+            await ProcessMeme(tag.m, tag.index);
+        }
+
+        [Command("ChangeTagsGlobally")]
+        public async Task ChangeTagGlobally(string o, string n)
+        {
+            if (!await CheckUser(Roles.Admin))
+                return;
+            await ReplyAsync($"Es wurden {Looter.ChangeTagGlobally(o,n)} Einträge abgeändert");
         }
     }
 
@@ -383,14 +444,9 @@ namespace DisBot
                 x.Value = string.Join("\n", Looter.Shorts);
                 x.IsInline = false;
             });
-            builder.AddField(x =>
-            {
-                x.Name = "Tags";
-                x.Value = string.Join("\n", Looter.GetAllTags().Select(y => $"{y.Key} [{y.Value}]"));
-                x.IsInline = false;
-            });
 
             await ReplyAsync("Bidde", false, builder.Build());
+            await ReplyAsync("Tags : \n" + string.Join("\n", Looter.GetAllTags().Select(y => $"{y.Key} [{y.Value}]")));
         }
 
         [Command("Find")]
@@ -420,6 +476,25 @@ namespace DisBot
             }
 
             await ReplyAsync("Bidde", false, sb.Build());
+        }
+    }
+
+    public class MemeCreator : ModuleBase
+    {
+        [Command("CreateMeme")]
+        public async Task CreateMeme(int index, string upper, string lower)
+        {
+            Meme m = Looter.ForceMeme(index);
+            string path = Path.Combine(Directory.GetCurrentDirectory(), "Memes");
+            MemeCreatorManager mcm = new MemeCreatorManager(path, null);
+            var res = mcm.CreateMeme(m, upper, lower);
+
+            await Context.Channel.SendFileAsync(res.path, $"{Context.User.Username} is Schuld");
+
+            if (Context.Guild != null)
+                await Context.Channel.DeleteMessagesAsync(new[] { Context.Message.Id });
+
+            Array.ForEach(Directory.GetFiles(path), File.Delete);
         }
     }
 }
