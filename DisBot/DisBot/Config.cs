@@ -26,6 +26,7 @@ namespace DisBot
         public HashSet<string> Suffixes { get; set; } = new HashSet<string> { ".png", ".jpg", ".gif", ".gifv", ".mp4" };
         public HashSet<string> ExceptionPrefixes { get; set; } = new HashSet<string> { "https://www.youtube.com/watch?" };
         public HashSet<string> ExceptionSuffixes { get; set; } = new HashSet<string> { ".gifv", ".mp4", };
+        public HashSet<ulong> Blacklist { get; set; } = new HashSet<ulong>();
 
         private static Config _current;
 
@@ -61,8 +62,15 @@ namespace DisBot
                 return 2;
             if (MemerRoles.Any(x => roles.Contains(x)))
                 return 1;
+            if (!Blacklist.Contains(id))
+                return 0;
 
-            return 0;
+            return -1;
+        }
+
+        public bool IsBanned(ulong id)
+        {
+            return (Blacklist.Contains(id) && id != SuperAdminID);
         }
 
         public void AddMemer(string m) => MemerRoles.Add(m);

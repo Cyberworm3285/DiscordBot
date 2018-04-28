@@ -73,6 +73,9 @@ namespace DisBot
             if (!(message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(client.CurrentUser, ref argPos))) return;
             var context = new CommandContext(client, message);
 
+            if (Config.Current.IsBanned(context.User.Id))
+                return;
+
             var result = await commands.ExecuteAsync(context, argPos, services);
             if (!result.IsSuccess)
                 await context.Channel.SendMessageAsync($"Da würd ich an deiner Stelle nochma drüber gucken ({result.ErrorReason})");

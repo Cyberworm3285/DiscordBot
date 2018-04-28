@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace DisBot
+namespace DisBot.Memes
 {
     public enum TagCombiner
     {
