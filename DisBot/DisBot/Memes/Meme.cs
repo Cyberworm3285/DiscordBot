@@ -5,7 +5,7 @@ using System.Text;
 using System.Linq;
 using Newtonsoft.Json;
 
-namespace DisBot
+namespace DisBot.Memes
 {
     public enum MemeType
     {
@@ -36,5 +36,8 @@ namespace DisBot
 
         [JsonConstructor]
         private Meme() { }
+
+        public override string ToString()
+            => $"[{Username}||{ID}]->{Type}";
     }
 }

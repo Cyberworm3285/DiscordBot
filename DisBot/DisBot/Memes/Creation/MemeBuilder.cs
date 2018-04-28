@@ -4,7 +4,7 @@ using System.Drawing.Drawing2D;
 using System.Drawing.Imaging;
 using System.IO;
 
-namespace DisBot
+namespace DisBot.Memes.Creation
 {
     //modified version of https://github.com/matteobortolazzo/meme-builder/blob/master/Meme/MemeBuilder.cs
     public static class MemeBuilder

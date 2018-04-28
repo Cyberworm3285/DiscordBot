@@ -10,6 +10,10 @@ using Discord.Commands;
 using Discord.WebSocket;
 using Discord;
 
+using DisBot.Memes;
+using DisBot.Memes.Creation;
+using static DisBot.Extensions.FormatExtensions;
+
 namespace DisBot
 {
     public class MyModuleBase : ModuleBase
@@ -34,23 +38,20 @@ namespace DisBot
             }
             return true;
         }
-    }
 
-    public class Memes : MyModuleBase
-    {
-        public async Task ProcessMeme(Meme m, int index = -1)
+        protected async Task ProcessMeme(IndexedMeme m)
         {
-            if (m == null)
+            if (m.Meme == null)
             {
                 await ReplyAsync("[nix da]");
                 return;
             }
 
-            string title = $"{(index == -1 ? null : "[" + index + "]")}{(m.Tags.Count == 0 ? "" : " Tags[" + string.Join(",", m.Tags) + "]")}";
-            switch (m.Type)
+            string title = $"{(m.Index == -1 ? null : "[" + m.Index + "]")}{(m.Meme.Tags.Count == 0 ? "" : " Tags[" + string.Join(",", m.Meme.Tags) + "]")}";
+            switch (m.Meme.Type)
             {
                 case MemeType.LinkOnly:
-                    await ReplyAsync(title + " " + m.URL);
+                    await ReplyAsync(title + " " + m.Meme.URL);
                     break;
 
                 case MemeType.Embed:
@@ -59,24 +60,36 @@ namespace DisBot
                         Title = title,
                         Color = new Color(200, 160, 50),
                     };
-                    builder.ImageUrl = m.URL;
+                    builder.ImageUrl = m.Meme.URL;
                     await ReplyAsync("", false, builder.Build());
                     break;
             }
         }
+    }
+
+    public class MemeModule : MyModuleBase
+    {
 
 
         [Command("Meme"), Alias("Gimme", "M")]
-        public async Task Loot()
-        {
-            var m = Looter.Next;
-            await ProcessMeme(m.m, m.index);
-        }
+        public async Task Loot() => await ProcessMeme(Looter.Next);
 
         [Command("Force"), Alias("F")]
-        public async Task Force(int index)
+        public async Task Force(int index) => await ProcessMeme(Looter.ForceMeme(index));
+
+        [Command("AddDirect")]
+        public async Task AddLoot(params string[] tags)
         {
-            await ProcessMeme(Looter.ForceMeme(index), index);
+            if (!Context.Message.Attachments.Any())
+            {
+                await ReplyAsync("Ich brauch Attachements Diggha");
+                return;
+            }
+
+            foreach(var x in Context.Message.Attachments)
+            {
+                await AddLoot(x.Url, tags);
+            }
         }
 
         [Command("Add"), Alias("A")]
@@ -155,13 +168,13 @@ namespace DisBot
         public async Task Shortcut(string s)
         {
             var sc = Looter.ProcessShortcut(s);
-            if (sc.index == -1)
+            if (sc.Index == -1)
             {
                 await ReplyAsync($"Der Shortcut {s} is Müll du {Config.Current.RandomCurse}");
                 return;
             }
 
-            await ProcessMeme(sc.m, sc.index);
+            await ProcessMeme(sc);
         }
 
         [Command("AddTag"), Alias("AT")]
@@ -241,13 +254,108 @@ namespace DisBot
         public async Task Tag(string t)
         {
             var tag = Looter.ProcessTag(t);
-            if (tag.index == -1)
+            if (tag.Index == -1)
             {
                 await ReplyAsync($"Der Tag {t} is Müll du {Config.Current.RandomCurse}");
                 return;
             }
 
-            await ProcessMeme(tag.m, tag.index);
+            await ProcessMeme(tag);
+        }
+
+        [Command("Tag_AND")]
+        public async Task TagAnd(params string[] t)
+        {
+            if (t is null || t.Length == 0)
+            {
+                await ReplyAsync($"@{Context.User.Mention} Musst halt schon tags angeben... Spast");
+                return;
+            }
+
+            var tag = Looter.ProcessTagCombination(t, TagCombiner.AND);
+            if (tag.Index == -1)
+            {
+                await ReplyAsync($"Gibbet net");
+                return;
+            }
+
+            await ProcessMeme(tag);
+        }
+
+        [Command("Tag_NAND")]
+        public async Task TagNand(params string[] t)
+        {
+            if (t is null || t.Length == 0)
+            {
+                await ReplyAsync($"@{Context.User.Mention} Musst halt schon tags angeben... Spast");
+                return;
+            }
+
+            var tag = Looter.ProcessTagCombination(t, TagCombiner.NAND);
+            if (tag.Index == -1)
+            {
+                await ReplyAsync($"Gibbet net");
+                return;
+            }
+
+            await ProcessMeme(tag);
+        }
+
+        [Command("Tag_OR")]
+        public async Task TagOr(params string[] t)
+        {
+            if (t is null || t.Length == 0)
+            {
+                await ReplyAsync($"@{Context.User.Mention} Musst halt schon tags angeben... Spast");
+                return;
+            }
+
+            var tag = Looter.ProcessTagCombination(t, TagCombiner.OR);
+            if (tag.Index == -1)
+            {
+                await ReplyAsync($"Gibbet net");
+                return;
+            }
+
+            await ProcessMeme(tag);
+        }
+
+        [Command("Tag_NOR")]
+        public async Task TagNor(params string[] t)
+        {
+            if (t is null || t.Length == 0)
+            {
+                await ReplyAsync($"@{Context.User.Mention} Musst halt schon tags angeben... Spast");
+                return;
+            }
+
+            var tag = Looter.ProcessTagCombination(t, TagCombiner.NOR);
+            if (tag.Index == -1)
+            {
+                await ReplyAsync($"Gibbet net");
+                return;
+            }
+
+            await ProcessMeme(tag);
+        }
+
+        [Command("Tag_Count")]
+        public async Task TagCount(params string[] t)
+        {
+            if (t is null || t.Length == 0)
+            {
+                await ReplyAsync($"@{Context.User.Mention} Musst halt schon tags angeben... Spast");
+                return;
+            }
+
+            var tag = Looter.ProcessTagCombination(t, TagCombiner.MAXCOUNT);
+            if (tag.Index == -1)
+            {
+                await ReplyAsync($"Gibbet net");
+                return;
+            }
+
+            await ProcessMeme(tag);
         }
 
         [Command("ChangeTagsGlobally")]
@@ -402,7 +510,7 @@ namespace DisBot
         }
     }
 
-    public class HelpModule : ModuleBase
+    public class HelpModule : MyModuleBase
     {
         private readonly CommandService _service;
 
@@ -453,7 +561,34 @@ namespace DisBot
         public async Task FindIndex(string URL)
         {
             int index = Looter.IndexOf(URL);
-            await ReplyAsync((index == -1) ? "nichts gefunden" : index.ToString());
+            IndexedMeme m = Looter.ForceMeme(index);
+            await ReplyAsync((index == -1) ? "nichts gefunden" : $"{index}: {m}");
+        }
+
+        [Command("FindTag")]
+        public async Task FindTag(string tag, bool postFull = false)
+        {
+            var query = Looter.Where(x => x.Tags.Contains(tag));
+            if (postFull)
+                foreach (var x in query)
+                    await ProcessMeme(x);
+            else
+            {
+                int i = 0;
+                StringBuilder sb = new StringBuilder();
+                foreach (var x in query)
+                {
+                    sb.Append($"{x.Index}\n[{string.Join(",",x.Meme.Tags)}] [{x.Meme.URL}]\n");
+                    if (i++ > 10)
+                    {
+                        i = 0;
+                        await ReplyAsync(sb.ToString());
+                        sb.Clear();
+                    }
+                }
+                if (i != 0)
+                    await ReplyAsync(sb.ToString());
+            }
         }
 
         [Command("Stats")]
@@ -484,10 +619,10 @@ namespace DisBot
         [Command("CreateMeme")]
         public async Task CreateMeme(int index, string upper, string lower)
         {
-            Meme m = Looter.ForceMeme(index);
+            IndexedMeme m = Looter.ForceMeme(index);
             string path = Path.Combine(Directory.GetCurrentDirectory(), "Memes");
             MemeCreatorManager mcm = new MemeCreatorManager(path, null);
-            var res = mcm.CreateMeme(m, upper, lower);
+            var res = mcm.CreateMeme(m.Meme, upper, lower);
 
             await Context.Channel.SendFileAsync(res.path, $"{Context.User.Username} is Schuld");
 

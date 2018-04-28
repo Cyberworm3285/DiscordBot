@@ -7,7 +7,7 @@ using System.Net;
 using System.Linq;
 using System.Drawing;
 
-namespace DisBot
+namespace DisBot.Memes.Creation
 {
     enum MemeCreatorStatus
     {

@@ -1,12 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using Newtonsoft.Json;
+
 using System.IO;
 using System.Linq;
 using System.Net;
 
-namespace DisBot
+using Newtonsoft.Json;
+
+using static DisBot.Extensions.LootingExtensions;
+
+namespace DisBot.Memes
 {
     [Serializable]
     public class NCS_String_Dictionary : Dictionary<string, string>
@@ -24,9 +28,9 @@ namespace DisBot
 
         #region Operations
 
-        public static (Meme m, int index) Next => (_base.Count>0)?_base.Rand():(null, -1);
+        public static IndexedMeme Next => (_base.Count>0)?_base.Rand():new IndexedMeme(null, -1);
 
-        public static Meme ForceMeme(int index) => _base[index];
+        public static IndexedMeme ForceMeme(int index) => new  IndexedMeme(_base[index], index);
 
         public static int IndexOf(string url) => _base.FindIndex(x => x.URL == url);
 
@@ -115,6 +119,10 @@ namespace DisBot
             }
             return stats;
         }
+
+        public static IEnumerable<IndexedMeme> Where(Predicate<Meme> predicate) => _base.IndexedWhere(predicate); 
+
+       // public static IEnumerable<(Meme m, int index)>
 
         #endregion
 
@@ -235,16 +243,16 @@ namespace DisBot
         public static bool DeleteShortcut(string s) =>
             _shortcuts.Remove(s);
 
-        public static (Meme m, int index) ProcessShortcut(string s)
+        public static IndexedMeme ProcessShortcut(string s)
         {
             string res = null;
             if (_shortcuts.TryGetValue(s, out res))
             {
                 int index = _base.FindIndex(x => x.URL == res);
-                return (_base[index], index);
+                return new IndexedMeme(_base[index], index);
             }
             else
-                return (null, -1);
+                return new IndexedMeme(null, -1);
         }
 
         #endregion
@@ -269,14 +277,54 @@ namespace DisBot
             return _base[index].Tags.Remove(s);
         }
 
-        public static (Meme m, int index) ProcessTag(string s)
+        public static IndexedMeme ProcessTag(string s)
         {
-            var t = _base.Where(x => x.Tags.Contains(s.ToLower())).ToList();
+            var t = _base.IndexedWhere(x => x.Tags.Contains(s.ToLower())).ToList();
             if (t.Count < 1)
-                return (null, -1);
+                return new IndexedMeme(null, -1);
 
-            Meme r = t.Rand().item;
-            return (r, _base.IndexOf(r));
+            return  t.Rand();
+        }
+
+        public static IEnumerable<IndexedMeme> QueryTagCombination(string[] s, TagCombiner mode = TagCombiner.AND)
+        {
+            IEnumerable<IndexedMeme> tagQuery;
+
+            switch (mode)
+            {
+                case TagCombiner.AND:
+                    tagQuery = _base.IndexedWhere(x => s.All(y => x.Tags.Contains(y)));
+                    break;
+                case TagCombiner.NAND:
+                    tagQuery = _base.IndexedWhere(x => !s.All(y => x.Tags.Contains(y)));
+                    break;
+                case TagCombiner.OR:
+                    tagQuery = _base.IndexedWhere(x => s.Any(y => x.Tags.Contains(y)));
+                    break;
+                case TagCombiner.NOR:
+                    tagQuery = _base.IndexedWhere(x => !s.Any(y => x.Tags.Contains(y)));
+                    break;
+                case TagCombiner.MAXCOUNT:
+                    var tempQuery = _base.Select(x => (x, x.Tags.Count(y => s.Contains(y))));
+                    int maxMatch = tempQuery.Max(x => x.Item2);
+                    tagQuery = tempQuery.Where(x => x.Item2 == maxMatch).Select(x => new IndexedMeme(x.x, _base.IndexOf(x.x)));
+                    break;
+
+                default:
+                    throw new NotImplementedException(mode.ToString() + " ist nicht implementiert");
+            }
+
+            return tagQuery;
+        }
+
+        public static IndexedMeme ProcessTagCombination(string[] s, TagCombiner mode = TagCombiner.AND)
+        {
+            var tagQuery = QueryTagCombination(s, mode);
+            if (!tagQuery.Any())
+                return new IndexedMeme(null, -1);
+
+            var m = tagQuery.Rand();
+            return m;
         }
 
         public static Dictionary<string, int> GetAllTags()

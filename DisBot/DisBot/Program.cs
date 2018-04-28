@@ -9,6 +9,8 @@ using Discord.WebSocket;
 using Discord.Commands;
 using Discord;
 
+using DisBot.Memes;
+
 namespace DisBot
 {
     public class Program
