@@ -27,6 +27,7 @@ namespace DisBot
         public HashSet<string> ExceptionPrefixes { get; set; } = new HashSet<string> { "https://www.youtube.com/watch?" };
         public HashSet<string> ExceptionSuffixes { get; set; } = new HashSet<string> { ".gifv", ".mp4", };
         public HashSet<ulong> Blacklist { get; set; } = new HashSet<ulong>();
+        public HashSet<ulong> Whitelist { get; set; } = new HashSet<ulong>();
 
         private static Config _current;
 

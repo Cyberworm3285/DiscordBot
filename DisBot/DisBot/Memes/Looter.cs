@@ -178,9 +178,9 @@ namespace DisBot.Memes
             File.WriteAllText(Config.Current.LootLocation, JsonConvert.SerializeObject(_base, Formatting.Indented));
         }
 
-        public static (bool success, int index) AddURL(string url, string username, string id, params string[] tags)
+        private static bool SanitizeURL(string url)
         {
-            bool exists;
+            bool exists = false;
             try
             {
                 HttpWebRequest request = (HttpWebRequest)HttpWebRequest.Create(url);
@@ -190,8 +190,14 @@ namespace DisBot.Memes
             }
             catch
             {
-                exists = false;
             }
+            return exists;
+        }
+
+        public static (bool success, int index) AddURL(string url, string username, string id, params string[] tags)
+        {
+            bool exists = SanitizeURL(url);
+
             if (
                 (!exists 
                 || !Config.Current.Suffixes.Any(x => url.EndsWith(x, StringComparison.InvariantCultureIgnoreCase))) 
@@ -201,6 +207,15 @@ namespace DisBot.Memes
             _base.Add(new Meme(url, username, id, CheckURL_Type(url), tags.Select(x => x.ToLower()).ToArray()));
             UpdateURLs();
             return (true, _base.Count - 1);
+        }
+
+        public static IEnumerable<int> FindCorupptedUrls()
+        {
+            for (int i = 0; i < _base.Count; i++)
+            {
+                if (!SanitizeURL(_base[i].URL))
+                    yield return i;
+            }
         }
 
         #endregion

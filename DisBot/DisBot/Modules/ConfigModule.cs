@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 
 using System.Threading.Tasks;
+using System.Linq;
 
 using Discord.Commands;
 
@@ -149,6 +150,42 @@ namespace DisBot.Modules
             if (!await RequireUser(Roles.SuperAdmin))
                 return;
             await ReplyAsync(Config.Current.RemoveExceptionSuffix(s).OkayNe());
+        }
+
+        [Command("Ban")]
+        public async Task Ban(string user)
+        {
+            if (!await RequireUser(Roles.SuperAdmin))
+                return;
+
+            Context.Message.MentionedUserIds.ToList().ForEach(x => Config.Current.Blacklist.Add(x));
+        }
+
+        [Command("UnBan")]
+        public async Task UnBan(string user)
+        {
+            if (!await RequireUser(Roles.SuperAdmin))
+                return;
+
+            Context.Message.MentionedUserIds.ToList().ForEach(x => Config.Current.Blacklist.Remove(x));
+        }
+
+        [Command("AddWhite")]
+        public async Task AddWhite(string user)
+        {
+            if (!await RequireUser(Roles.Admin))
+                return;
+
+            Context.Message.MentionedUserIds.ToList().ForEach(x => Config.Current.Whitelist.Add(x));
+        }
+
+        [Command("RemWhite")]
+        public async Task RemWhite(string user)
+        {
+            if (!await RequireUser(Roles.SuperAdmin))
+                return;
+
+            Context.Message.MentionedUserIds.ToList().ForEach(x => Config.Current.Whitelist.Remove(x));
         }
     }
 }

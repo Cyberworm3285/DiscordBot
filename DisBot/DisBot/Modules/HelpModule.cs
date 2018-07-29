@@ -56,7 +56,30 @@ namespace DisBot.Modules
             });
 
             await ReplyAsync("Bidde", false, builder.Build());
-            await ReplyAsync("Tags : \n" + string.Join("\n", Looter.GetAllTags().Select(y => $"{y.Key} [{y.Value}]")));
+
+            StringBuilder sb = new StringBuilder();
+            var tags = Looter.GetAllTags()
+                .Select(y => $"{y.Key} [{y.Value}]")
+                .ToList();
+            int length = 0;
+
+            string NEWLINE = Environment.NewLine;
+            string TAG_HEADER = "Tags : " + NEWLINE;
+            int ADDITIONAL_LENGTH = (TAG_HEADER + NEWLINE).Length;
+
+            for (int i = 0; i < tags.Count; i++)
+            {
+                if (length + tags[i].Length + ADDITIONAL_LENGTH >= 2000)
+                {
+                    await ReplyAsync(TAG_HEADER + sb.ToString());
+                    length = 0;
+                    sb.Clear();
+                }
+                sb.Append(tags[i] + NEWLINE);
+                length += tags[i].Length + 2;
+            }
+            if (length > 0)
+                await ReplyAsync(TAG_HEADER + sb.ToString());
         }
 
         [Command("Find")]
@@ -64,13 +87,13 @@ namespace DisBot.Modules
         {
             int index = Looter.IndexOf(URL);
             IndexedMeme m = Looter.ForceMeme(index);
-            await ReplyAsync((index == -1) ? "nichts gefunden" : $"{index}: {m}");
+            await ReplyAsync((index == -1) ? "nichts gefunden" : $"{index}: {m.Meme}");
         }
 
         [Command("FindTag")]
         public async Task FindTag(string tag, bool postFull = false)
         {
-            if (!await RequireUser(Roles.SuperAdmin))
+            if (!await RequireUser(Roles.Admin))
                 return;
             var query = Looter.Where(x => x.Tags.Contains(tag));
             if (postFull)
@@ -95,6 +118,39 @@ namespace DisBot.Modules
             }
         }
 
+        //[Command("FindDeadWeight")]
+        //public async Task FindCorrupted(bool kill = false)
+        //{
+        //    return;
+        //    new Task(async () =>
+        //    {
+        //        if (!await RequireUser(Roles.SuperAdmin))
+        //            return;
+        //
+        //        var r = Looter.FindCorupptedUrls().ToList();
+        //        if (!r.Any())
+        //        {
+        //            await ReplyAsync("alles paletti");
+        //            return;
+        //        }
+        //        if (kill)
+        //        {
+        //            int kills = 0;
+        //            for (int i = r.Count - 1; i > 0; i--)
+        //            {
+        //                Looter.Delete(r[i]);
+        //                await ReplyAsync($"Pew [{r[i]}]");
+        //                kills++;
+        //            }
+        //            await ReplyAsync($"{kills} kills");
+        //            return;
+        //        }
+        //        await ReplyAsync("betroffene Indizes:");
+        //        foreach(var x in r)
+        //            await ReplyAsync(x.ToString());
+        //    }).Start();
+        //}
+
         [Command("Stats")]
         public async Task Stats()
         {
@@ -117,22 +173,11 @@ namespace DisBot.Modules
             await ReplyAsync("Bidde", false, sb.Build());
         }
 
-        [Command("Ban")]
-        public async Task Ban(string user)
+        [Command("GetUrl")]
+        public async Task GetURL(int index)
         {
-            if (!await RequireUser(Roles.SuperAdmin))
-                return;
-
-            Context.Message.MentionedUserIds.ToList().ForEach(x => Config.Current.Blacklist.Add(x));
+            await ReplyAsync($"[{Looter.ForceMeme(index).Meme.URL}]");
         }
 
-        [Command("UnBan")]
-        public async Task UnBan(string user)
-        {
-            if (!await RequireUser(Roles.SuperAdmin))
-                return;
-
-            Context.Message.MentionedUserIds.ToList().ForEach(x => Config.Current.Blacklist.Remove(x));
-        }
     }
 }

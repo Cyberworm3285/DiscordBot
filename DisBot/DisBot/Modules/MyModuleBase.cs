@@ -29,6 +29,9 @@ namespace DisBot.Modules
         {
             if (Context.User.Id == Config.Current.SuperAdminID)
                 return true;
+            if (Config.Current.Whitelist.Contains(Context.User.Id) && requiredRole == Roles.Memer)
+                return true;
+
             var su = Context.User as SocketGuildUser;
             if (su == null || Config.Current.CheckUserPermissions(su.Roles.Select(x => x.Name), su.Id) < (int)requiredRole)
             {
@@ -58,8 +61,8 @@ namespace DisBot.Modules
                     {
                         Title = title,
                         Color = new Color(200, 160, 50),
+                        ImageUrl = m.Meme.URL,
                     };
-                    builder.ImageUrl = m.Meme.URL;
                     await ReplyAsync("", false, builder.Build());
                     break;
             }

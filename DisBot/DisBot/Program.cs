@@ -10,6 +10,8 @@ using Discord.Commands;
 using Discord;
 
 using DisBot.Memes;
+using DisBot.Modules.Fallback;
+using System.Collections.Generic;
 
 namespace DisBot
 {
@@ -18,6 +20,7 @@ namespace DisBot
         private DiscordSocketClient client;
         private CommandService commands;
         private IServiceProvider services;
+        private ModuleFallback fallback;
 
         static void Main(string[] args) => new Program()
             .Start()
@@ -36,9 +39,17 @@ namespace DisBot
 
             commands = new CommandService();
 
+            fallback = new ModuleFallback()
+            {
+                new KeyValuePair<string, ReactionMeme>("hans", new ReactionMeme(":fire: Flammenwerfer :fire:", "", false)),
+                new KeyValuePair<string, ReactionMeme>("kommste ran", new ReactionMeme("", "https://i.redd.it/oz4ds1ecg5r01.gif", false)),
+                new KeyValuePair<string, ReactionMeme>("marco", new ReactionMeme("polo", "", true))
+            };
+
             services = new ServiceCollection()
                     .AddSingleton(client)
                     .AddSingleton(commands)
+                    .AddSingleton(fallback)
                     .BuildServiceProvider();
 
             await InstallCommands();
@@ -65,20 +76,29 @@ namespace DisBot
 
         public async Task HandleCommand(SocketMessage messageParam)
         {
+            if (messageParam.Author == client.CurrentUser)
+                return;
+
             var message = messageParam as SocketUserMessage;
             if (message == null) return;
 
 
             int argPos = 0;
-            if (!(message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(client.CurrentUser, ref argPos))) return;
             var context = new CommandContext(client, message);
-
             if (Config.Current.IsBanned(context.User.Id))
                 return;
 
-            var result = await commands.ExecuteAsync(context, argPos, services);
-            if (!result.IsSuccess)
-                await context.Channel.SendMessageAsync($"Da würd ich an deiner Stelle nochma drüber gucken ({result.ErrorReason})");
+
+            if ((message.HasCharPrefix('!', ref argPos) || message.HasMentionPrefix(client.CurrentUser, ref argPos)))
+            {
+                var result = await commands.ExecuteAsync(context, argPos, services);
+                if (!result.IsSuccess)
+                    await context.Channel.SendMessageAsync($"Da würd ich an deiner Stelle nochma drüber gucken ({result.ErrorReason})");
+            }
+            else
+            {
+                await fallback.TryFallback(message.Content, context);
+            }
         }
     }
 
