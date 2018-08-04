@@ -187,5 +187,15 @@ namespace DisBot.Modules
 
             Context.Message.MentionedUserIds.ToList().ForEach(x => Config.Current.Whitelist.Remove(x));
         }
+
+        [Command("ToggleTTS")]
+        public async Task ToggleTTS()
+        {
+            if (!await RequireUser(Roles.Memer))
+                return;
+
+            Config.Current.UseTTS = !Config.Current.UseTTS;
+            await ReplyAsync($"Toggled TTS to {Config.Current.UseTTS}");
+        }
     }
 }

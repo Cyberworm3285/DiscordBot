@@ -41,9 +41,10 @@ namespace DisBot
 
             fallback = new ModuleFallback()
             {
-                new KeyValuePair<string, ReactionMeme>("hans", new ReactionMeme(":fire: Flammenwerfer :fire:", "", false)),
-                new KeyValuePair<string, ReactionMeme>("kommste ran", new ReactionMeme("", "https://i.redd.it/oz4ds1ecg5r01.gif", false)),
-                new KeyValuePair<string, ReactionMeme>("marco", new ReactionMeme("polo", "", true))
+                new ReactionMeme("", false, x => x.ToUpper().Contains("HANS"), (x,cc) => ":fire: Get Ze Flammenwerfer :fire:"),
+                new ReactionMeme("https://i.redd.it/oz4ds1ecg5r01.gif", false, x => x.ToUpper().Contains("KOMMSTE RAN"), (x, cc) => ""),
+                new ReactionMeme("", true, x => x.ToUpper().Contains("MARCO"), (x, cc) => "Polo"),
+                new ReactionMeme("", true, x => x.ToUpper().Contains("CANCER"), (x, cc) => "CANCER"),
             };
 
             services = new ServiceCollection()
@@ -76,7 +77,7 @@ namespace DisBot
 
         public async Task HandleCommand(SocketMessage messageParam)
         {
-            if (messageParam.Author == client.CurrentUser)
+            if (messageParam.Author.Id == client.CurrentUser.Id)
                 return;
 
             var message = messageParam as SocketUserMessage;

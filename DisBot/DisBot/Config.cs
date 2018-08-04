@@ -28,6 +28,7 @@ namespace DisBot
         public HashSet<string> ExceptionSuffixes { get; set; } = new HashSet<string> { ".gifv", ".mp4", };
         public HashSet<ulong> Blacklist { get; set; } = new HashSet<ulong>();
         public HashSet<ulong> Whitelist { get; set; } = new HashSet<ulong>();
+        public bool UseTTS { get; set; } = true;
 
         private static Config _current;
 

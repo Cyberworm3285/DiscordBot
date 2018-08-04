@@ -2,15 +2,18 @@
 using System.Collections.Generic;
 using System.Text;
 
+using Discord.Commands;
+
 namespace DisBot.Memes
 {
-    struct ReactionMeme
+    class ReactionMeme
     {
-        public readonly string Text;
         public readonly bool TTS;
         public readonly string URL;
+        public readonly Func<string, bool> Matcher;
+        public readonly Func<string, CommandContext, string> Transformer;
 
-        public ReactionMeme(string t, string url, bool tts)
-            => (Text, URL, TTS) = (t, url, tts);
+        public ReactionMeme(string url, bool tts, Func<string, bool> matcher, Func<string, CommandContext, string> transformer)
+            => (URL, TTS, Matcher, Transformer) = (url, tts, matcher, transformer);
     }
 }

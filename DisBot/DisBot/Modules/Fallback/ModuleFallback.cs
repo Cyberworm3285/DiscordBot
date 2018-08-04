@@ -11,49 +11,49 @@ using Discord;
 
 namespace DisBot.Modules.Fallback
 {
-    class ModuleFallback : IEnumerable<KeyValuePair<string, ReactionMeme>>
+    class ModuleFallback : IEnumerable<ReactionMeme>
     {
-        private List<KeyValuePair<string, ReactionMeme>> _keyWordsAnswers;
+        private List<ReactionMeme> _reactionMemes;
 
         public ModuleFallback()
-            => _keyWordsAnswers = new List<KeyValuePair<string, ReactionMeme>>();
+            => _reactionMemes = new List<ReactionMeme>();
 
-        public void Add(KeyValuePair<string, ReactionMeme> keywordValue)
-        {
-            if (_keyWordsAnswers.FindIndex(x => x.Key == keywordValue.Key) != -1)
-                throw new ArgumentException($"key {keywordValue.Key} already taken");
-
-            _keyWordsAnswers.Add(new KeyValuePair<string, ReactionMeme>(keywordValue.Key.ToUpper(), keywordValue.Value));
-        }
+        public void Add(ReactionMeme meme)
+            =>_reactionMemes.Add(meme);
 
         public async Task<bool> TryFallback(string message, CommandContext context)
         {
             //keys sind schon upper case
-            KeyValuePair<string, ReactionMeme>? match = _keyWordsAnswers.Find(x => message.ToUpper().Contains(x.Key));
-            if (match != null)
+            var list = _reactionMemes
+                .Where(x => x.Matcher(message))
+                .ToList();
+
+            if (list.Count > 1)
+                await context.Channel.SendMessageAsync("[mehrfachbelegung, Bot-Admin ist ein Idiot]");
+
+            ReactionMeme temp = list[0];
+            EmbedBuilder eb = null;
+            if (!string.IsNullOrEmpty(temp.URL))
             {
-                ReactionMeme temp = match.Value.Value;
-                EmbedBuilder eb = null;
-                if (!string.IsNullOrEmpty(temp.URL))
-                    eb = new EmbedBuilder
-                    {
-                        Title = temp.Text,
-                        ImageUrl = temp.URL,
-                    };
-                await context.Channel.SendMessageAsync($"`{context.User}>> .. {match.Value.Key} .. `{(eb == null?("\n" + temp.Text):"")}", temp.TTS, eb==null?null:eb.Build());
-                return true;
+                eb = new EmbedBuilder
+                {
+                    Title = temp.Transformer(message, context),
+                    ImageUrl = temp.URL,
+                };
+                await context.Channel.SendMessageAsync("", false, eb.Build());
             }
-            return false;
+            await context.Channel.SendMessageAsync(temp.Transformer(message, context), temp.TTS);
+            return true;
         }
 
-        public IEnumerator<KeyValuePair<string, ReactionMeme>> GetEnumerator()
+        public IEnumerator<ReactionMeme> GetEnumerator()
         {
-            return ((IEnumerable<KeyValuePair<string, ReactionMeme>>)_keyWordsAnswers).GetEnumerator();
+            return ((IEnumerable<ReactionMeme>)_reactionMemes).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IEnumerable<KeyValuePair<string, ReactionMeme>>)_keyWordsAnswers).GetEnumerator();
+            return ((IEnumerable<ReactionMeme>)_reactionMemes).GetEnumerator();
         }
     }
 }
