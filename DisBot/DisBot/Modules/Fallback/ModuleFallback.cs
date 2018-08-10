@@ -6,54 +6,64 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Linq;
 
-using DisBot.Memes;
+using DisBot.Memes.ReactionMemes;
 using Discord;
+using Discord.WebSocket;
+
+using static DisBot.Extensions.LootingExtensions;
 
 namespace DisBot.Modules.Fallback
 {
-    class ModuleFallback : IEnumerable<ReactionMeme>
+    class ModuleFallback : IEnumerable<(IMessageMatcher, IReactionProvider)>
     {
-        private List<ReactionMeme> _reactionMemes;
+        private List<(IMessageMatcher Matcher, IReactionProvider Provider)> _reactionMemes;
 
         public ModuleFallback()
-            => _reactionMemes = new List<ReactionMeme>();
+            => _reactionMemes = new List<(IMessageMatcher, IReactionProvider)>();
 
-        public void Add(ReactionMeme meme)
+        public ModuleFallback(ICollection<(IMessageMatcher, IReactionProvider)> col)
+            => _reactionMemes = col.ToList();
+
+        public void Add((IMessageMatcher, IReactionProvider) meme)
             =>_reactionMemes.Add(meme);
 
-        public async Task<bool> TryFallback(string message, CommandContext context)
+        public async Task<bool> TryFallback(SocketUserMessage message, CommandContext context)
         {
             //keys sind schon upper case
             var list = _reactionMemes
-                .Where(x => x.Matcher(message))
+                .Where(x => x.Matcher.Match(message))
+                .GroupBy(x => x.Matcher.Priority)
+                .OrderByDescending(x => x.Key)
+                .First()
                 .ToList();
 
-            if (list.Count > 1)
-                await context.Channel.SendMessageAsync("[mehrfachbelegung, Bot-Admin ist ein Idiot]");
+            if (list.Count > 1 && list[0].Matcher.Priority > 0)
+                await context.Channel.SendMessageAsync($"Bot-Admin, get your priorities straight du Lachsnacken (c:{list.Count},p:{list[0].Matcher.Priority})");
 
-            ReactionMeme temp = list[0];
+            ReactionMeme temp = list.Rand().Provider.GetReaction(message);
             EmbedBuilder eb = null;
             if (!string.IsNullOrEmpty(temp.URL))
             {
                 eb = new EmbedBuilder
                 {
-                    Title = temp.Transformer(message, context),
+                    Title = temp.Text,
                     ImageUrl = temp.URL,
+                    Color = new Color(255, 100, 0),
                 };
                 await context.Channel.SendMessageAsync("", false, eb.Build());
             }
-            await context.Channel.SendMessageAsync(temp.Transformer(message, context), temp.TTS);
+            await context.Channel.SendMessageAsync(temp.Text, temp.TTS && Config.Current.UseTTS);
             return true;
         }
 
-        public IEnumerator<ReactionMeme> GetEnumerator()
+        public IEnumerator<(IMessageMatcher, IReactionProvider)> GetEnumerator()
         {
-            return ((IEnumerable<ReactionMeme>)_reactionMemes).GetEnumerator();
+            return ((IEnumerable<(IMessageMatcher, IReactionProvider)>)_reactionMemes).GetEnumerator();
         }
 
         IEnumerator IEnumerable.GetEnumerator()
         {
-            return ((IEnumerable<ReactionMeme>)_reactionMemes).GetEnumerator();
+            return ((IEnumerable<(IMessageMatcher, IReactionProvider)>)_reactionMemes).GetEnumerator();
         }
     }
 }

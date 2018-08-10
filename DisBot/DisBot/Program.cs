@@ -9,9 +9,9 @@ using Discord.WebSocket;
 using Discord.Commands;
 using Discord;
 
+using DisBot.Memes.ReactionMemes;
 using DisBot.Memes;
 using DisBot.Modules.Fallback;
-using System.Collections.Generic;
 
 namespace DisBot
 {
@@ -39,13 +39,7 @@ namespace DisBot
 
             commands = new CommandService();
 
-            fallback = new ModuleFallback()
-            {
-                new ReactionMeme("", false, x => x.ToUpper().Contains("HANS"), (x,cc) => ":fire: Get Ze Flammenwerfer :fire:"),
-                new ReactionMeme("https://i.redd.it/oz4ds1ecg5r01.gif", false, x => x.ToUpper().Contains("KOMMSTE RAN"), (x, cc) => ""),
-                new ReactionMeme("", true, x => x.ToUpper().Contains("MARCO"), (x, cc) => "Polo"),
-                new ReactionMeme("", true, x => x.ToUpper().Contains("CANCER"), (x, cc) => "CANCER"),
-            };
+            fallback = new ModuleFallback(ReactionLibrary.GetReactions());
 
             services = new ServiceCollection()
                     .AddSingleton(client)
@@ -54,7 +48,6 @@ namespace DisBot
                     .BuildServiceProvider();
 
             await InstallCommands();
-
             client.Log += Log;
 
             await client.LoginAsync(TokenType.Bot, token);
@@ -98,7 +91,7 @@ namespace DisBot
             }
             else
             {
-                await fallback.TryFallback(message.Content, context);
+                await fallback.TryFallback(message, context);
             }
         }
     }

@@ -14,6 +14,7 @@ namespace DisBot
         [JsonIgnore]
         private static Random rand = new Random();
         public string Token { get; set; } = null;
+        public ulong SelfID { get; set; }
         public string LootLocation { get; set; } = $@"{Directory.GetCurrentDirectory()}\loot.lt";
         public string ShortcutLocation { get; set; } = $@"{Directory.GetCurrentDirectory()}\shortcuts.sc";
         public List<string> Curses { get; set; } = new List<string>{ "Hure" };
